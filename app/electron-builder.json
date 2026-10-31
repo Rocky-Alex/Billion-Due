@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json.schemastore.org/electron-builder.json",
+  "appId": "com.billiondue.invoice",
+  "productName": "BillionDue",
+  "copyright": "Copyright © 2026 Team BC Dev",
+  "electronDist": "node_modules/electron/dist",
+  "directories": {
+    "output": "release",
+    "buildResources": "build"
+  },
+  "files": ["dist/**/*", "electron/**/*", "package.json"],
+  "asar": true,
+  "npmRebuild": false,
+  "nodeGypRebuild": false,
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "build/icon.ico",
+    "legalTrademarks": "Team BC Dev",
+    "signtoolOptions": {
+      "publisherName": "Team BC Dev"
+    }
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": true,
+    "allowToChangeInstallationDirectory": true,
+    "include": "build/installer.nsh",
+    "allowElevation": true,
+    "createDesktopShortcut": "always",
+    "createStartMenuShortcut": true,
+    "shortcutName": "BillionDue",
+    "installerIcon": "build/icon.ico",
+    "uninstallerIcon": "build/icon.ico",
+    "installerHeaderIcon": "build/icon.ico",
+    "deleteAppDataOnUninstall": false,
+    "runAfterFinish": true
+  },
+  "portable": {
+    "artifactName": "${productName}-Portable-${version}.${ext}"
+  }
+}

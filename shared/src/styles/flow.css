@@ -1,0 +1,32 @@
+.download-note a {
+  margin-left: auto;
+  text-decoration: none;
+}
+
+.activity-summary {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #6d56e8;
+}
+
+.activity-summary > svg {
+  width: 34px;
+  height: 34px;
+}
+
+.activity-summary > div {
+  display: grid;
+  gap: 4px;
+}
+
+.activity-summary strong {
+  font: 800 26px "Manrope";
+  color: #27304a;
+}
+
+.activity-summary small {
+  color: #8a91a3;
+}

@@ -1,0 +1,269 @@
+/* ==========================================================================
+   BILLIONDUE AUTHENTICATION & PORTAL LOGIN STYLES
+   Light Theme & Fintech High Contrast
+   ========================================================================== */
+
+.session-bar {
+  height: 42px;
+  background: #ffffff;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  position: relative;
+  z-index: 50;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.session-bar .logo {
+  height: 42px;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.session-bar .logo-mark {
+  width: 25px;
+  height: 25px;
+  border-radius: 7px;
+}
+
+.session-bar > span {
+  font-size: 9px;
+  color: #64748b;
+  border-left: 1px solid #e2e8f0;
+  margin-left: 14px;
+  padding-left: 14px;
+}
+
+.session-bar > div:last-child {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  color: #047857;
+}
+
+.portal-login {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  background: #f8fafc;
+}
+
+.portal-login-brand {
+  padding: 58px 8vw;
+  color: #0f172a;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #ECFDF5 0%, #D1FAE5 35%, #ffffff 100%);
+  border-right: 1px solid #A7F3D0;
+}
+
+.portal-login-brand:after {
+  content: '';
+  position: absolute;
+  width: 560px;
+  height: 560px;
+  border: 1px solid rgba(4, 120, 87,  0.35);
+  border-radius: 50%;
+  left: -180px;
+  bottom: -270px;
+  box-shadow: 0 0 0 80px rgba(167, 243, 208,  0.25), 0 0 0 160px rgba(236, 253, 245,  0.5);
+  pointer-events: none;
+}
+
+.portal-login-brand .logo {
+  height: 45px;
+  color: #0f172a;
+  z-index: 1;
+}
+
+.portal-login-brand > div:nth-child(2) {
+  margin: auto 0;
+  z-index: 1;
+}
+
+.portal-login-brand h1 {
+  font: 800 43px 'Manrope', 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -1.7px;
+  line-height: 1.14;
+  margin: 13px 0;
+  color: #0f172a;
+}
+
+.portal-login-brand p {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.7;
+  max-width: 490px;
+}
+
+.download-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #A7F3D0;
+  border-radius: 11px;
+  padding: 14px;
+  z-index: 1;
+  box-shadow: 0 4px 16px rgba(4, 120, 87,  0.12);
+  color: #0f172a;
+}
+
+.download-note > svg {
+  font-size: 26px;
+  color: #047857;
+}
+
+.download-note span {
+  display: grid;
+}
+
+.download-note b {
+  font-size: 10px;
+  color: #0f172a;
+}
+
+.download-note small {
+  font-size: 8px;
+  color: #64748b;
+  margin-top: 3px;
+  line-height: 1.5;
+}
+
+.portal-login-card {
+  width: 440px;
+  align-self: center;
+  justify-self: center;
+  background: #ffffff;
+  border: 1px solid #A7F3D0;
+  border-radius: 15px;
+  padding: 27px;
+  box-shadow: 0 20px 50px rgba(4, 120, 87,  0.12);
+  display: grid;
+}
+
+.portal-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.portal-choice > button {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 9px;
+  padding: 11px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.portal-choice > button.active {
+  border-color: #A7F3D0;
+  background: #ECFDF5;
+  color: #047857;
+  box-shadow: 0 0 0 2px rgba(4, 120, 87,  0.25);
+  font-weight: 700;
+}
+
+.portal-choice > button > svg {
+  font-size: 20px;
+  color: inherit;
+}
+
+.portal-choice span {
+  display: grid;
+}
+
+.portal-choice b {
+  font-size: 9px;
+}
+
+.portal-choice small {
+  font-size: 7px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.portal-login-card > h2 {
+  font: 800 24px 'Manrope', 'Plus Jakarta Sans', sans-serif;
+  margin: 6px 0 2px;
+  color: #0f172a;
+}
+
+.portal-login-card > p {
+  font-size: 10px;
+  color: #64748b;
+  margin: 0 0 16px;
+}
+
+.portal-login-card > label {
+  display: grid;
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 800;
+  color: #475569;
+  margin-bottom: 11px;
+}
+
+.portal-login-card input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 11px;
+  outline: none;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.portal-login-card input:focus {
+  border-color: #047857;
+  box-shadow: 0 0 0 3px rgba(4, 120, 87,  0.2);
+}
+
+.portal-login-card > .primary-btn {
+  margin-top: 5px;
+}
+
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #fff0f1;
+  color: #c64955;
+  border: 1px solid #f7d6d9;
+  border-radius: 7px;
+  padding: 8px;
+  margin-bottom: 8px;
+  font-size: 9px;
+}
+
+.surface-desktop .desktop-frame {
+  min-height: 100vh;
+}
+
+.surface-desktop .desktop-body {
+  min-height: calc(100vh - 68px);
+}
+
+@media (max-width: 1100px) {
+  .portal-login-brand {
+    padding-left: 5vw;
+    padding-right: 5vw;
+  }
+  .portal-login-card {
+    width: 400px;
+  }
+  .portal-login-brand h1 {
+    font-size: 36px;
+  }
+}

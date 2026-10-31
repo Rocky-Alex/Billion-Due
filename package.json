@@ -1,0 +1,59 @@
+{
+  "name": "billiondue",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "BillionDue — Turn invoices into income.",
+  "author": "Team BC Dev",
+  "workspaces": [
+    "app",
+    "website",
+    "shared"
+  ],
+  "scripts": {
+    "start": "npm run dev:website",
+    "dev": "concurrently -k \"npm:dev:api\" \"npm:dev:website\"",
+    "dev:website": "node node_modules/vite/bin/vite.js website --host localhost --port 3001",
+    "dev:app": "node node_modules/vite/bin/vite.js app --host localhost --port 3002",
+    "dev:api": "node --watch-path=website/server --env-file=.env.local website/server/api.mjs",
+    "dev:api:watch": "node --watch-path=website/server --env-file=.env.local website/server/api.mjs",
+    "dev:web": "npm run dev:website",
+    "dev:all": "concurrently -k \"npm:dev:api\" \"npm:dev:website\" \"npm:dev:app\" \"wait-on http://localhost:3002 && node scripts/run_electron.cjs app\"",
+    "start:all": "npm run dev:all",
+    "build": "npm run build:website && npm run build:app",
+    "build:website": "node node_modules/typescript/bin/tsc --project website/tsconfig.app.json --noEmit && node node_modules/vite/bin/vite.js build website",
+    "build:app": "node node_modules/typescript/bin/tsc --project app/tsconfig.app.json --noEmit && node node_modules/vite/bin/vite.js build app",
+    "test": "node node_modules/vitest/vitest.mjs run",
+    "test:watch": "node node_modules/vitest/vitest.mjs",
+    "electron": "npm run build:app && node scripts/run_electron.cjs app",
+    "electron:dev": "concurrently -k \"npm:dev:api\" \"npm:dev:app\" \"wait-on http://localhost:3002 && node scripts/run_electron.cjs app\"",
+    "app:dev": "npm run electron:dev",
+    "build:desktop": "npm run build:app && node -e \"require('fs').cpSync('app/build','build',{recursive:true})\" && electron-builder --config app/electron-builder.json --win && node scripts/sign_release.cjs",
+    "package": "npm run build:app && node -e \"require('fs').cpSync('app/build','build',{recursive:true})\" && electron-builder --config app/electron-builder.json --win && node scripts/sign_release.cjs",
+    "dist:win": "npm run build:app && electron-builder --config app/electron-builder.json --win",
+    "dist:dir": "npm run build:app && electron-builder --config app/electron-builder.json --dir",
+    "dist:portable": "npm run build:app && electron-builder --config app/electron-builder.json --win portable"
+  },
+  "main": "app/electron/main.cjs",
+  "dependencies": {
+    "nodemailer": "^10.1.7"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "concurrently": "latest",
+    "electron": "latest",
+    "electron-builder": "^26.15.3",
+    "lucide-react": "latest",
+    "pg": "^8.16.3",
+    "react": "latest",
+    "react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "vitest": "latest",
+    "wait-on": "latest"
+  }
+}

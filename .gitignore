@@ -1,0 +1,12 @@
+node_modules/
+dist/
+release/
+outputs/
+*.tsbuildinfo
+.vite/
+*.log
+*.pfx
+.env
+.env.*
+!.env.example
+
