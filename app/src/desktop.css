@@ -924,6 +924,15 @@
   font-size: 20px;
   font-weight: 800;
   margin-top: 4px;
+  color: #064e3b;
+}
+
+[data-theme="dark"] .payments-hero {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="dark"] .payments-hero strong {
   color: #f8fafc;
 }
 

@@ -153,6 +153,10 @@ export interface InvoiceRenderData {
   balanceDue?: number;
   isTaxInvoice?: boolean;
   notes?: string;
+  documentType?: "invoice" | "proforma" | "receipt";
+  paymentMethod?: string;
+  referenceInvoiceId?: string;
+  titleText?: string;
 }
 
 export function populateInvoiceTemplate(
@@ -218,7 +222,15 @@ export function populateInvoiceTemplate(
   html = html.replace(/01\/01\/20XX/g, escapeHtml(data.issueDate || ""));
   html = html.replace(/01\/02\/20XX/g, escapeHtml(data.dueDate || ""));
 
-  const invoiceTitleText = data.isTaxInvoice === false ? "INVOICE" : "TAX INVOICE";
+  const invoiceTitleText =
+    data.titleText ||
+    (data.documentType === "proforma"
+      ? "PROFORMA INVOICE"
+      : data.documentType === "receipt"
+        ? "PAYMENT RECEIPT"
+        : data.isTaxInvoice === false
+          ? "INVOICE"
+          : "TAX INVOICE");
 
   // Replace existing H1 INVOICE
   html = html.replace(

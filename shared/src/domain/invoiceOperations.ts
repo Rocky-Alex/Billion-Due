@@ -123,6 +123,93 @@ export function getNextInvoiceNumber(
   return `INV-${String(nextNum).padStart(4, "0")}`;
 }
 
+/**
+ * Generates the next sequential proforma invoice number in the series "PI-XXXX" (e.g. PI-0001, PI-0002).
+ */
+export function getNextProformaNumber(
+  existingInvoices?: Array<{ id?: string; documentType?: string }>,
+): string {
+  if (!existingInvoices || existingInvoices.length === 0) {
+    return "PI-0001";
+  }
+
+  let maxNum = 0;
+  for (const inv of existingInvoices) {
+    if (!inv || !inv.id) continue;
+    const match = String(inv.id).trim().match(/^PI-(\d{1,5})$/i);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (!isNaN(num) && num > maxNum) {
+        maxNum = num;
+      }
+    }
+  }
+
+  const nextNum = maxNum + 1;
+  return `PI-${String(nextNum).padStart(4, "0")}`;
+}
+
+/**
+ * Generates the next sequential receipt voucher number in the series "REC-XXXX" (e.g. REC-0001, REC-0002).
+ */
+export function getNextReceiptNumber(
+  existingInvoices?: Array<{ id?: string; documentType?: string }>,
+): string {
+  if (!existingInvoices || existingInvoices.length === 0) {
+    return "REC-0001";
+  }
+
+  let maxNum = 0;
+  for (const inv of existingInvoices) {
+    if (!inv || !inv.id) continue;
+    const match = String(inv.id).trim().match(/^REC-(\d{1,5})$/i);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (!isNaN(num) && num > maxNum) {
+        maxNum = num;
+      }
+    }
+  }
+
+  const nextNum = maxNum + 1;
+  return `REC-${String(nextNum).padStart(4, "0")}`;
+}
+
+/**
+ * Converts a Proforma Invoice into an official Tax Invoice.
+ * Assigns next sequential INV-xxxx ID, links the original proforma ID, sets documentType="invoice".
+ */
+export function convertProformaToInvoice(
+  proforma: Invoice,
+  existingInvoices?: Invoice[],
+): { newInvoice: Invoice; updatedProforma: Invoice } {
+  const newInvoiceId = getNextInvoiceNumber(existingInvoices);
+  const now = new Date();
+  const dueDate = new Date(now.getTime() + 14 * 86400000);
+
+  const newInvoice: Invoice = {
+    ...proforma,
+    id: newInvoiceId,
+    documentType: "invoice",
+    referenceInvoiceId: proforma.id,
+    status: "Sent",
+    isTaxInvoice: proforma.isTaxInvoice ?? true,
+    issued: now.toLocaleDateString(),
+    due: dueDate.toLocaleDateString(),
+    notes: proforma.notes
+      ? `${proforma.notes}\n[Converted from Proforma ${proforma.id}]`
+      : `[Converted from Proforma ${proforma.id}]`,
+  };
+
+  const updatedProforma: Invoice = {
+    ...proforma,
+    status: "Converted",
+    proformaConverted: true,
+  };
+
+  return { newInvoice, updatedProforma };
+}
+
 export function parseInvoicesCsv(csvText: string): Invoice[] {
   const rows = parseCsvRaw(csvText.replace(/^\uFEFF/, ""));
   if (rows.length < 2) {

@@ -6,6 +6,9 @@ import {
   parseInvoicesCsv,
   parseInvoicesJson,
   getNextInvoiceNumber,
+  getNextProformaNumber,
+  getNextReceiptNumber,
+  convertProformaToInvoice,
   buildWhatsAppMessage,
   mergeInvoices,
   updateInvoice,
@@ -599,6 +602,100 @@ INV-2026-000999,Global Logistics FZE,+971 50 999 8888,finance@globallogistics.ae
 
       expect(result.length).toBe(sampleInvoices.length + 1);
       expect(result[0].id).toBe("INV-2026-BRAND-NEW");
+    });
+  });
+
+  describe("8. Performa Invoice & Receipt Sequential Operations", () => {
+    it("generates PI-0001 when no proforma invoices exist", () => {
+      expect(getNextProformaNumber([])).toBe("PI-0001");
+      expect(getNextProformaNumber(undefined)).toBe("PI-0001");
+      expect(getNextProformaNumber([{ id: "INV-0001" }])).toBe("PI-0001");
+    });
+
+    it("generates next sequential PI number correctly", () => {
+      const existing = [
+        { id: "PI-0001" },
+        { id: "PI-0002" },
+        { id: "INV-0005" },
+      ];
+      expect(getNextProformaNumber(existing)).toBe("PI-0003");
+    });
+
+    it("generates REC-0001 when no receipts exist", () => {
+      expect(getNextReceiptNumber([])).toBe("REC-0001");
+      expect(getNextReceiptNumber(undefined)).toBe("REC-0001");
+      expect(getNextReceiptNumber([{ id: "INV-0001" }])).toBe("REC-0001");
+    });
+
+    it("generates next sequential REC number correctly", () => {
+      const existing = [
+        { id: "REC-0001" },
+        { id: "REC-0005" },
+      ];
+      expect(getNextReceiptNumber(existing)).toBe("REC-0006");
+    });
+
+    it("converts a proforma invoice into a tax invoice and marks proforma converted", () => {
+      const proforma: Invoice = {
+        id: "PI-0001",
+        customer: "Gulf Supplies LLC",
+        amount: 4500,
+        status: "Sent",
+        documentType: "proforma",
+        issued: "10/20/2026",
+        due: "11/04/2026",
+      };
+
+      const existingInvoices: Invoice[] = [
+        { id: "INV-0001", customer: "Customer A", amount: 100, issued: "10/10/2026", due: "10/24/2026", status: "Paid" },
+      ];
+
+      const { newInvoice, updatedProforma } = convertProformaToInvoice(proforma, existingInvoices);
+
+      expect(newInvoice.id).toBe("INV-0002");
+      expect(newInvoice.documentType).toBe("invoice");
+      expect(newInvoice.referenceInvoiceId).toBe("PI-0001");
+      expect(newInvoice.customer).toBe("Gulf Supplies LLC");
+      expect(newInvoice.amount).toBe(4500);
+
+      expect(updatedProforma.status).toBe("Converted");
+      expect(updatedProforma.proformaConverted).toBe(true);
+    });
+
+    it("renders PROFORMA INVOICE header in template when documentType is proforma", () => {
+      const renderData: InvoiceRenderData = {
+        companyName: "Al Futtaim Logistics LLC",
+        invoiceId: "PI-0001",
+        customerName: "Gulf Supplies LLC",
+        issueDate: "10/20/2026",
+        dueDate: "11/04/2026",
+        subtotal: 4500,
+        tax: 225,
+        total: 4725,
+        documentType: "proforma",
+      };
+
+      const html = populateInvoiceTemplate("default_invoice", renderData);
+      expect(html).toContain("PROFORMA INVOICE");
+      expect(html).toContain("#PI-0001");
+    });
+
+    it("renders PAYMENT RECEIPT header in template when documentType is receipt", () => {
+      const renderData: InvoiceRenderData = {
+        companyName: "Al Futtaim Logistics LLC",
+        invoiceId: "REC-0001",
+        customerName: "Gulf Supplies LLC",
+        issueDate: "10/20/2026",
+        dueDate: "10/20/2026",
+        subtotal: 4725,
+        tax: 0,
+        total: 4725,
+        documentType: "receipt",
+      };
+
+      const html = populateInvoiceTemplate("default_invoice", renderData);
+      expect(html).toContain("PAYMENT RECEIPT");
+      expect(html).toContain("#REC-0001");
     });
   });
 });

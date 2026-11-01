@@ -46,6 +46,7 @@ import {
   Phone,
   Plus,
   Printer,
+  Receipt,
   ReceiptText,
   RefreshCcw,
   Save,
@@ -84,6 +85,9 @@ import {
   generateInstallationKey,
   isDummyProduct,
   getNextInvoiceNumber,
+  getNextProformaNumber,
+  getNextReceiptNumber,
+  convertProformaToInvoice,
   createRequestCode,
   downloadEncryptedBackup,
   encryptBackup,
@@ -2035,9 +2039,12 @@ function DesktopApp({
   const [invoices, setInvoices] = useState<Invoice[]>(emptyInvoices);
   const [localDataLoaded, setLocalDataLoaded] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [invoiceModalDocType, setInvoiceModalDocType] = useState<"invoice" | "proforma" | "receipt">("invoice");
   const [showPreview, setShowPreview] = useState(false);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [showRecordPayment, setShowRecordPayment] = useState(false);
+  const [paymentTargetInvoice, setPaymentTargetInvoice] = useState<Invoice | null>(null);
   const [prefilledCustomer, setPrefilledCustomer] = useState<Customer | null>(null);
   const [backup, setBackup] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -2936,12 +2943,98 @@ function DesktopApp({
         }}
       />
     );
+
+  const handleConvertProforma = (proforma: Invoice) => {
+    const { newInvoice, updatedProforma } = convertProformaToInvoice(proforma, invoices);
+    setInvoices((prev) => [
+      newInvoice,
+      ...prev.map((i) => (i.id === proforma.id ? updatedProforma : i)),
+    ]);
+    notify(`Proforma ${proforma.id} converted to Tax Invoice ${newInvoice.id}!`);
+  };
+
+  const handleSavePayment = (data: {
+    invoiceId?: string;
+    customer: string;
+    customerPhone?: string;
+    customerEmail?: string;
+    amount: number;
+    paymentMethod: string;
+    paymentDate: string;
+    notes?: string;
+    issueReceipt: boolean;
+  }) => {
+    let newReceipt: Invoice | null = null;
+    if (data.issueReceipt) {
+      newReceipt = {
+        id: getNextReceiptNumber(invoices),
+        customer: data.customer,
+        customerPhone: data.customerPhone,
+        customerEmail: data.customerEmail,
+        amount: data.amount,
+        issued: data.paymentDate,
+        due: data.paymentDate,
+        status: "Paid",
+        documentType: "receipt",
+        paymentMethod: data.paymentMethod,
+        referenceInvoiceId: data.invoiceId,
+        notes: data.notes || `Payment received via ${data.paymentMethod}`,
+        subtotal: data.amount,
+        tax: 0,
+        items: [
+          {
+            description: data.invoiceId
+              ? `Payment received against Invoice ${data.invoiceId}`
+              : `Payment received via ${data.paymentMethod}`,
+            qty: 1,
+            rate: data.amount,
+            amount: data.amount,
+          },
+        ],
+      };
+    }
+
+    setInvoices((prev) => {
+      let updated = [...prev];
+      if (data.invoiceId) {
+        updated = updated.map((inv) => {
+          if (inv.id === data.invoiceId) {
+            const currentAdvance = inv.advancePaid || 0;
+            const newAdvance = currentAdvance + data.amount;
+            const balanceDue = Math.max(0, inv.amount - newAdvance);
+            const isFull = balanceDue <= 0;
+            return {
+              ...inv,
+              status: isFull ? "Paid" : "Sent",
+              advancePaid: newAdvance,
+              balanceDue,
+              paymentMethod: data.paymentMethod,
+            };
+          }
+          return inv;
+        });
+      }
+      if (newReceipt) {
+        return [newReceipt, ...updated];
+      }
+      return updated;
+    });
+
+    notify(
+      newReceipt
+        ? `Payment of AED ${data.amount.toLocaleString()} recorded! Receipt ${newReceipt.id} issued.`
+        : `Payment of AED ${data.amount.toLocaleString()} recorded!`,
+    );
+  };
+
   const nav = [
     ["dashboard", <LayoutDashboard />, "Dashboard"],
-    ["invoices", <ReceiptText />, "Invoices"],
+    ["invoices", <ReceiptText />, "Invoice"],
+    ["proforma", <FileText />, "Performa Invoice"],
+    ["receipts", <Receipt />, "Receipts"],
+    ["payments", <CreditCard />, "Payments"],
     ["customers", <Users />, "Customers"],
     ["products", <Package />, "Products & services"],
-    ["payments", <CreditCard />, "Payments"],
     ["reports", <BarChart3 />, "Reports"],
     ["settings", <Settings />, "Settings"],
   ];
@@ -3041,7 +3134,15 @@ function DesktopApp({
                   ? "Business dashboard"
                   : page === "settings"
                     ? "User & Account Settings"
-                    : page.replace(/^./, (m) => m.toUpperCase())}
+                    : page === "invoices"
+                      ? "Invoice"
+                      : page === "proforma"
+                        ? "Performa Invoice"
+                        : page === "receipts"
+                          ? "Receipts"
+                          : page === "payments"
+                            ? "Payments"
+                            : page.replace(/^./, (m) => m.toUpperCase())}
               </h1>
             </div>
           </header>
@@ -3065,7 +3166,10 @@ function DesktopApp({
               invoices={invoices}
               setInvoices={setInvoices}
               company={company}
-              setShowInvoice={setShowInvoice}
+              setShowInvoice={() => {
+                setInvoiceModalDocType("invoice");
+                setShowInvoice(true);
+              }}
               onPreviewInvoice={(inv) => {
                 setPreviewInvoice(inv);
                 setShowPreview(true);
@@ -3073,6 +3177,62 @@ function DesktopApp({
               onEditInvoice={(inv) => {
                 setEditingInvoice(inv);
                 setShowInvoice(true);
+              }}
+              onRecordPayment={(inv) => {
+                setPaymentTargetInvoice(inv);
+                setShowRecordPayment(true);
+              }}
+              notify={notify}
+            />
+          )}
+          {page === "proforma" && (
+            <ProformaInvoiceList
+              invoices={invoices}
+              setInvoices={setInvoices}
+              company={company}
+              onNewProforma={() => {
+                setInvoiceModalDocType("proforma");
+                setShowInvoice(true);
+              }}
+              onPreviewInvoice={(inv) => {
+                setPreviewInvoice(inv);
+                setShowPreview(true);
+              }}
+              onEditInvoice={(inv) => {
+                setEditingInvoice(inv);
+                setShowInvoice(true);
+              }}
+              notify={notify}
+            />
+          )}
+          {page === "receipts" && (
+            <ReceiptsList
+              invoices={invoices}
+              setInvoices={setInvoices}
+              company={company}
+              onIssueReceipt={() => {
+                setPaymentTargetInvoice(null);
+                setShowRecordPayment(true);
+              }}
+              onPreviewReceipt={(rec) => {
+                setPreviewInvoice(rec);
+                setShowPreview(true);
+              }}
+              notify={notify}
+            />
+          )}
+          {page === "payments" && (
+            <PaymentsView
+              invoices={invoices}
+              setInvoices={setInvoices}
+              company={company}
+              onRecordPayment={(inv) => {
+                setPaymentTargetInvoice(inv || null);
+                setShowRecordPayment(true);
+              }}
+              onPreviewInvoice={(inv) => {
+                setPreviewInvoice(inv);
+                setShowPreview(true);
               }}
               notify={notify}
             />
@@ -3104,7 +3264,6 @@ function DesktopApp({
               notify={notify}
             />
           )}
-          {page === "payments" && <PaymentsView invoices={invoices} />}
           {page === "reports" && <ReportsView invoices={invoices} />}
           {page === "settings" && (
             <DesktopAppSettings
@@ -3142,10 +3301,12 @@ function DesktopApp({
           customers={customers}
           prefilledCustomer={prefilledCustomer}
           editingInvoice={editingInvoice}
+          defaultDocumentType={invoiceModalDocType}
           close={() => {
             setShowInvoice(false);
             setEditingInvoice(null);
             setPrefilledCustomer(null);
+            setInvoiceModalDocType("invoice");
           }}
           save={(invoice) => {
             if (editingInvoice) {
@@ -3198,6 +3359,7 @@ function DesktopApp({
             setShowInvoice(false);
             setEditingInvoice(null);
             setPrefilledCustomer(null);
+            setInvoiceModalDocType("invoice");
           }}
         />
       )}
@@ -3212,6 +3374,9 @@ function DesktopApp({
           onEdit={(inv) => {
             setEditingInvoice(inv);
             setShowInvoice(true);
+          }}
+          onConvertToInvoice={(proforma) => {
+            handleConvertProforma(proforma);
           }}
           onStatusChange={(newStatus) => {
             const targetId = (previewInvoice || invoices[0])?.id;
@@ -3243,6 +3408,18 @@ function DesktopApp({
             }
           }}
           notify={notify}
+        />
+      )}
+      {showRecordPayment && (
+        <RecordPaymentModal
+          isOpen={showRecordPayment}
+          invoices={invoices}
+          preselectedInvoice={paymentTargetInvoice}
+          close={() => {
+            setShowRecordPayment(false);
+            setPaymentTargetInvoice(null);
+          }}
+          onSavePayment={handleSavePayment}
         />
       )}{" "}
       {backup && (
@@ -3363,26 +3540,34 @@ function DesktopDashboard({
   onPreviewInvoice?: (invoice: Invoice) => void;
   onEditInvoice?: (invoice: Invoice) => void;
 }) {
-  const revenue = invoices
+  const officialInvoices = useMemo(() => {
+    return invoices.filter(
+      (i) =>
+        i.documentType === "invoice" ||
+        (!i.documentType && !i.id.startsWith("PI-") && !i.id.startsWith("REC-")),
+    );
+  }, [invoices]);
+
+  const revenue = officialInvoices
     .filter((i) => i.status === "Paid")
     .reduce((s, i) => s + i.amount, 0);
-  const outstanding = invoices
+  const outstanding = officialInvoices
     .filter((i) => i.status !== "Paid" && i.status !== "Overdue")
     .reduce((sum, invoice) => sum + invoice.amount, 0);
-  const overdue = invoices
+  const overdue = officialInvoices
     .filter((i) => i.status === "Overdue")
     .reduce((sum, invoice) => sum + invoice.amount, 0);
-  const customers = new Set(invoices.map((invoice) => invoice.customer)).size;
-  const paidCount = invoices.filter(
+  const customers = new Set(officialInvoices.map((invoice) => invoice.customer)).size;
+  const paidCount = officialInvoices.filter(
     (invoice) => invoice.status === "Paid",
   ).length;
-  const sentCount = invoices.filter(
+  const sentCount = officialInvoices.filter(
     (invoice) => invoice.status === "Sent",
   ).length;
-  const overdueCount = invoices.filter(
+  const overdueCount = officialInvoices.filter(
     (invoice) => invoice.status === "Overdue",
   ).length;
-  const totalInvoices = invoices.length;
+  const totalInvoices = officialInvoices.length;
   const paidPct = totalInvoices > 0 ? (paidCount / totalInvoices) * 100 : 0;
   const sentPct = totalInvoices > 0 ? (sentCount / totalInvoices) * 100 : 0;
 
@@ -3509,7 +3694,7 @@ function DesktopDashboard({
             </button>
           </div>
           <InvoiceMiniTable
-            invoices={invoices}
+            invoices={officialInvoices}
             open={(inv) => {
               if (onPreviewInvoice && inv) {
                 onPreviewInvoice(inv);
@@ -3877,6 +4062,7 @@ function InvoiceList({
   setShowInvoice,
   onPreviewInvoice,
   onEditInvoice,
+  onRecordPayment,
   notify,
 }: {
   invoices: Invoice[];
@@ -3885,6 +4071,7 @@ function InvoiceList({
   setShowInvoice: (v: boolean) => void;
   onPreviewInvoice: (invoice: Invoice) => void;
   onEditInvoice?: (invoice: Invoice) => void;
+  onRecordPayment?: (invoice: Invoice) => void;
   notify: (s: string, t?: Toast["tone"]) => void;
 }) {
   const [activeTab, setActiveTab] = useState<string>("all");
@@ -3893,21 +4080,30 @@ function InvoiceList({
   const [shareWhatsAppInvoice, setShareWhatsAppInvoice] = useState<Invoice | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Official Tax / Sales invoices (excludes proformas & receipts)
+  const officialInvoices = useMemo(() => {
+    return invoices.filter(
+      (i) =>
+        i.documentType === "invoice" ||
+        (!i.documentType && !i.id.startsWith("PI-") && !i.id.startsWith("REC-")),
+    );
+  }, [invoices]);
+
   // Live status counts
   const counts = useMemo(() => {
     return {
-      all: invoices.length,
-      paid: invoices.filter((i) => i.status === "Paid").length,
-      sent: invoices.filter((i) => i.status === "Sent").length,
-      overdue: invoices.filter((i) => i.status === "Overdue").length,
-      draft: invoices.filter((i) => i.status === "Draft").length,
-      cancelled: invoices.filter((i) => i.status === "Cancelled").length,
+      all: officialInvoices.length,
+      paid: officialInvoices.filter((i) => i.status === "Paid").length,
+      sent: officialInvoices.filter((i) => i.status === "Sent").length,
+      overdue: officialInvoices.filter((i) => i.status === "Overdue").length,
+      draft: officialInvoices.filter((i) => i.status === "Draft").length,
+      cancelled: officialInvoices.filter((i) => i.status === "Cancelled").length,
     };
-  }, [invoices]);
+  }, [officialInvoices]);
 
   // Filtered invoices
   const filteredInvoices = useMemo(() => {
-    let result = invoices;
+    let result = officialInvoices;
     if (activeTab !== "all") {
       result = result.filter(
         (i) => i.status.toLowerCase() === activeTab.toLowerCase(),
@@ -3926,7 +4122,7 @@ function InvoiceList({
       );
     }
     return result;
-  }, [invoices, activeTab, searchQuery]);
+  }, [officialInvoices, activeTab, searchQuery]);
 
   const handleStatusChange = (invoiceId: string, newStatus: string) => {
     setInvoices((prev) =>
@@ -4319,16 +4515,28 @@ function InvoiceList({
                         </button>
                       )}
 
-                      {/* Quick Mark Paid */}
+                      {/* Quick Mark Paid & Record Payment */}
                       {i.status !== "Paid" && (
-                        <button
-                          type="button"
-                          className="icon-btn"
-                          title="Quick Mark as Paid"
-                          onClick={() => handleStatusChange(i.id, "Paid")}
-                        >
-                          <Check size={14} color="#16a34a" />
-                        </button>
+                        <>
+                          {onRecordPayment && (
+                            <button
+                              type="button"
+                              className="icon-btn"
+                              title="Record payment & issue receipt"
+                              onClick={() => onRecordPayment(i)}
+                            >
+                              <CreditCard size={14} color="#047857" />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            title="Quick Mark as Paid"
+                            onClick={() => handleStatusChange(i.id, "Paid")}
+                          >
+                            <Check size={14} color="#16a34a" />
+                          </button>
+                        </>
                       )}
 
                       {/* Delete Button */}
@@ -4362,44 +4570,1387 @@ function InvoiceList({
   );
 }
 
-function PaymentsView({ invoices }: { invoices: typeof emptyInvoices }) {
-  const total = invoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-  const collected = invoices
-    .filter((invoice) => invoice.status === "Paid")
-    .reduce((sum, invoice) => sum + invoice.amount, 0);
-  const pending = total - collected;
-  const collectionRate = total > 0 ? (collected / total) * 100 : 0;
+function ProformaInvoiceList({
+  invoices,
+  setInvoices,
+  company,
+  onNewProforma,
+  onPreviewInvoice,
+  onEditInvoice,
+  notify,
+}: {
+  invoices: Invoice[];
+  setInvoices: React.Dispatch<React.SetStateAction<Invoice[]>>;
+  company: Company;
+  onNewProforma: () => void;
+  onPreviewInvoice: (invoice: Invoice) => void;
+  onEditInvoice?: (invoice: Invoice) => void;
+  notify: (s: string, t?: Toast["tone"]) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [shareWhatsAppInvoice, setShareWhatsAppInvoice] = useState<Invoice | null>(null);
+
+  // Proforma invoices
+  const proformaInvoices = useMemo(() => {
+    return invoices.filter(
+      (i) => i.documentType === "proforma" || i.id.startsWith("PI-"),
+    );
+  }, [invoices]);
+
+  // Live counts & stats
+  const stats = useMemo(() => {
+    const totalVal = proformaInvoices.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const converted = proformaInvoices.filter(
+      (p) => p.status === "Converted" || p.proformaConverted,
+    ).length;
+    const pending = proformaInvoices.filter(
+      (p) => p.status === "Pending" || p.status === "Sent" || p.status === "Draft",
+    ).length;
+    const cancelled = proformaInvoices.filter((p) => p.status === "Cancelled").length;
+    return {
+      all: proformaInvoices.length,
+      totalVal,
+      converted,
+      pending,
+      cancelled,
+    };
+  }, [proformaInvoices]);
+
+  // Filtered proformas
+  const filteredProformas = useMemo(() => {
+    let result = proformaInvoices;
+    if (activeTab === "pending") {
+      result = result.filter(
+        (p) => p.status === "Pending" || p.status === "Sent" || p.status === "Draft",
+      );
+    } else if (activeTab === "converted") {
+      result = result.filter((p) => p.status === "Converted" || p.proformaConverted);
+    } else if (activeTab === "cancelled") {
+      result = result.filter((p) => p.status === "Cancelled");
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (p) =>
+          p.id.toLowerCase().includes(q) ||
+          p.customer.toLowerCase().includes(q) ||
+          (p.customerPhone && p.customerPhone.toLowerCase().includes(q)) ||
+          (p.notes && p.notes.toLowerCase().includes(q)) ||
+          String(p.amount).includes(q) ||
+          p.status.toLowerCase().includes(q),
+      );
+    }
+    return result;
+  }, [proformaInvoices, activeTab, searchQuery]);
+
+  const handleStatusChange = (proformaId: string, newStatus: string) => {
+    setInvoices((prev) =>
+      prev.map((i) => (i.id === proformaId ? { ...i, status: newStatus } : i)),
+    );
+    notify(`Proforma ${proformaId} status updated to ${newStatus}`);
+  };
+
+  const handleConvert = (proforma: Invoice) => {
+    if (proforma.status === "Converted" || proforma.proformaConverted) {
+      notify(`Proforma ${proforma.id} has already been converted`, "warn");
+      return;
+    }
+    const { newInvoice, updatedProforma } = convertProformaToInvoice(proforma, invoices);
+    setInvoices((prev) => [
+      newInvoice,
+      ...prev.map((i) => (i.id === proforma.id ? updatedProforma : i)),
+    ]);
+    notify(`Proforma ${proforma.id} successfully converted to Tax Invoice ${newInvoice.id}!`);
+  };
+
+  const handleDelete = (proformaId: string) => {
+    if (window.confirm(`Are you sure you want to delete proforma invoice ${proformaId}?`)) {
+      setInvoices((prev) => prev.filter((i) => i.id !== proformaId));
+      notify(`Proforma ${proformaId} removed`);
+    }
+  };
+
+  return (
+    <section className="desk-panel desk-page">
+      <div className="panel-head">
+        <div>
+          <h2>Performa Invoices</h2>
+          <p>
+            Provisional sales quotes & estimates. Convert any quotation to an official Tax Invoice in 1 click.
+          </p>
+        </div>
+        <div className="top-actions">
+          <div className="searchbox">
+            <Search />
+            <input
+              placeholder="Search by PI #, customer..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                style={{
+                  background: "transparent",
+                  border: 0,
+                  cursor: "pointer",
+                  color: "#94a3b8",
+                  padding: 2,
+                }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Export Dropdown */}
+          <div className="export-menu-container">
+            <button
+              type="button"
+              className="secondary-btn"
+              onClick={() => setExportMenuOpen(!exportMenuOpen)}
+              title="Export proformas"
+            >
+              <FileDown size={14} /> Export <ChevronDown size={12} />
+            </button>
+            {exportMenuOpen && (
+              <div className="export-menu">
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportInvoicesToCsv(filteredProformas);
+                    setExportMenuOpen(false);
+                    notify(`Exported ${filteredProformas.length} proformas to CSV`);
+                  }}
+                >
+                  <FileSpreadsheet size={14} color="#047857" /> Export as CSV (.csv)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportInvoicesToJson(filteredProformas);
+                    setExportMenuOpen(false);
+                    notify(`Exported ${filteredProformas.length} proformas to JSON`);
+                  }}
+                >
+                  <FileText size={14} color="#047857" /> Export as JSON (.json)
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button className="primary-btn" onClick={onNewProforma}>
+            <Plus size={15} /> New Performa Invoice
+          </button>
+        </div>
+      </div>
+
+      {/* Hero Stats */}
+      <div className="payments-hero" style={{ background: "linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 100%)", borderColor: "#BFDBFE" }}>
+        <FileText size={38} color="#2563EB" />
+        <div>
+          <span>Total Proforma Value</span>
+          <strong style={{ color: "#1E3A8A" }}>{money(stats.totalVal)}</strong>
+        </div>
+        <div>
+          <span>Active / Open Quotes</span>
+          <strong style={{ color: "#D97706" }}>{stats.pending} quotes</strong>
+        </div>
+        <div>
+          <span>Converted to Tax Invoices</span>
+          <strong style={{ color: "#047857" }}>{stats.converted} converted</strong>
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="filter-tabs">
+        <button
+          className={activeTab === "all" ? "active" : ""}
+          onClick={() => setActiveTab("all")}
+        >
+          All Quotes <span className="filter-tab-count">{stats.all}</span>
+        </button>
+        <button
+          className={activeTab === "pending" ? "active" : ""}
+          onClick={() => setActiveTab("pending")}
+        >
+          Pending / Open <span className="filter-tab-count">{stats.pending}</span>
+        </button>
+        <button
+          className={activeTab === "converted" ? "active" : ""}
+          onClick={() => setActiveTab("converted")}
+        >
+          Converted <span className="filter-tab-count">{stats.converted}</span>
+        </button>
+        <button
+          className={activeTab === "cancelled" ? "active" : ""}
+          onClick={() => setActiveTab("cancelled")}
+        >
+          Cancelled <span className="filter-tab-count">{stats.cancelled}</span>
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Proforma #</th>
+              <th>Customer</th>
+              <th>Template</th>
+              <th>Date Issued</th>
+              <th>Valid Until</th>
+              <th>Amount (AED)</th>
+              <th>Status</th>
+              <th style={{ textAlign: "right" }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredProformas.length === 0 && (
+              <tr>
+                <td colSpan={8}>
+                  <EmptyRows text="No proforma invoices found. Click 'New Performa Invoice' above to issue a quotation." />
+                </td>
+              </tr>
+            )}
+            {filteredProformas.map((p) => {
+              const tmpl =
+                INVOICE_TEMPLATES.find((t) => t.id === p.template) ||
+                INVOICE_TEMPLATES[0];
+              const isConverted = p.status === "Converted" || p.proformaConverted;
+              return (
+                <tr key={p.id}>
+                  <td>
+                    <button
+                      type="button"
+                      className="invoice-link"
+                      onClick={() => onPreviewInvoice(p)}
+                      title="Click to preview this proforma invoice"
+                    >
+                      {p.id}
+                    </button>
+                  </td>
+                  <td>
+                    <div>
+                      <strong>{p.customer}</strong>
+                      {p.customerPhone && (
+                        <div style={{ fontSize: 11, color: "#64748b" }}>
+                          {p.customerPhone}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <span
+                      className="template-badge"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5,
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          background: tmpl.accent,
+                          display: "inline-block",
+                        }}
+                      />
+                      {tmpl.name}
+                    </span>
+                  </td>
+                  <td>{p.issued}</td>
+                  <td>{p.due}</td>
+                  <td>
+                    <strong>{money(p.amount)}</strong>
+                  </td>
+                  <td>
+                    <select
+                      className={`invoice-status-select status-${(p.status || "Draft").toLowerCase()}`}
+                      value={p.status}
+                      onChange={(e) => handleStatusChange(p.id, e.target.value)}
+                    >
+                      <option value="Draft">Draft</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Sent">Sent</option>
+                      <option value="Converted">Converted</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </td>
+                  <td>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                        gap: 6,
+                      }}
+                    >
+                      {/* Convert to Tax Invoice Button */}
+                      {!isConverted ? (
+                        <button
+                          type="button"
+                          className="primary-btn"
+                          style={{
+                            padding: "5px 9px",
+                            fontSize: 11,
+                            background: "linear-gradient(135deg, #0284C7, #0369A1)",
+                          }}
+                          title="Convert this quote directly into an official Tax Invoice"
+                          onClick={() => handleConvert(p)}
+                        >
+                          <Sparkles size={12} /> Convert to Tax Invoice
+                        </button>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: "#047857",
+                            background: "#ECFDF5",
+                            padding: "3px 8px",
+                            borderRadius: 12,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          <CheckCircle2 size={12} /> Converted
+                        </span>
+                      )}
+
+                      {/* WhatsApp Share Button */}
+                      <button
+                        type="button"
+                        className="btn-whatsapp-icon"
+                        title="Share proforma via WhatsApp"
+                        onClick={() => setShareWhatsAppInvoice(p)}
+                      >
+                        <MessageSquare size={13} />
+                      </button>
+
+                      {/* Preview Button */}
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        title="Preview & Print proforma"
+                        onClick={() => onPreviewInvoice(p)}
+                      >
+                        <Eye size={14} />
+                      </button>
+
+                      {/* Edit Button */}
+                      {onEditInvoice && !isConverted && (
+                        <button
+                          type="button"
+                          className="icon-btn"
+                          title="Edit proforma"
+                          onClick={() => onEditInvoice(p)}
+                        >
+                          <Pencil size={14} color="#047857" />
+                        </button>
+                      )}
+
+                      {/* Delete Button */}
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        title="Delete proforma"
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        <Trash2 size={14} color="#ef4444" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {shareWhatsAppInvoice && (
+        <WhatsAppShareModal
+          invoice={shareWhatsAppInvoice}
+          company={company}
+          close={() => setShareWhatsAppInvoice(null)}
+          notify={notify}
+        />
+      )}
+    </section>
+  );
+}
+
+function ReceiptsList({
+  invoices,
+  setInvoices,
+  company,
+  onIssueReceipt,
+  onPreviewReceipt,
+  notify,
+}: {
+  invoices: Invoice[];
+  setInvoices: React.Dispatch<React.SetStateAction<Invoice[]>>;
+  company: Company;
+  onIssueReceipt: () => void;
+  onPreviewReceipt: (receipt: Invoice) => void;
+  notify: (s: string, t?: Toast["tone"]) => void;
+}) {
+  const [methodFilter, setMethodFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [shareWhatsAppInvoice, setShareWhatsAppInvoice] = useState<Invoice | null>(null);
+
+  const receipts = useMemo(() => {
+    return invoices.filter(
+      (i) => i.documentType === "receipt" || i.id.startsWith("REC-"),
+    );
+  }, [invoices]);
+
+  const stats = useMemo(() => {
+    const totalCollected = receipts.reduce((sum, r) => sum + (r.amount || 0), 0);
+    const bankTotal = receipts
+      .filter((r) => (r.paymentMethod || "").toLowerCase().includes("bank"))
+      .reduce((sum, r) => sum + (r.amount || 0), 0);
+    const cashTotal = receipts
+      .filter((r) => (r.paymentMethod || "").toLowerCase().includes("cash"))
+      .reduce((sum, r) => sum + (r.amount || 0), 0);
+    return {
+      totalCollected,
+      count: receipts.length,
+      bankTotal,
+      cashTotal,
+    };
+  }, [receipts]);
+
+  const filteredReceipts = useMemo(() => {
+    let result = receipts;
+    if (methodFilter !== "all") {
+      result = result.filter(
+        (r) => (r.paymentMethod || "").toLowerCase().includes(methodFilter.toLowerCase()),
+      );
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (r) =>
+          r.id.toLowerCase().includes(q) ||
+          r.customer.toLowerCase().includes(q) ||
+          (r.referenceInvoiceId && r.referenceInvoiceId.toLowerCase().includes(q)) ||
+          (r.paymentMethod && r.paymentMethod.toLowerCase().includes(q)) ||
+          (r.notes && r.notes.toLowerCase().includes(q)) ||
+          String(r.amount).includes(q),
+      );
+    }
+    return result;
+  }, [receipts, methodFilter, searchQuery]);
+
+  const handleDelete = (receiptId: string) => {
+    if (window.confirm(`Are you sure you want to delete payment receipt ${receiptId}?`)) {
+      setInvoices((prev) => prev.filter((i) => i.id !== receiptId));
+      notify(`Receipt ${receiptId} removed`);
+    }
+  };
+
+  return (
+    <section className="desk-panel desk-page">
+      <div className="panel-head">
+        <div>
+          <h2>Receipts</h2>
+          <p>
+            Customer payment receipts and official settlement vouchers with verified audit trails.
+          </p>
+        </div>
+        <div className="top-actions">
+          <div className="searchbox">
+            <Search />
+            <input
+              placeholder="Search by REC #, customer, invoice..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                style={{
+                  background: "transparent",
+                  border: 0,
+                  cursor: "pointer",
+                  color: "#94a3b8",
+                  padding: 2,
+                }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Export Dropdown */}
+          <div className="export-menu-container">
+            <button
+              type="button"
+              className="secondary-btn"
+              onClick={() => setExportMenuOpen(!exportMenuOpen)}
+              title="Export receipts"
+            >
+              <FileDown size={14} /> Export <ChevronDown size={12} />
+            </button>
+            {exportMenuOpen && (
+              <div className="export-menu">
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportInvoicesToCsv(filteredReceipts);
+                    setExportMenuOpen(false);
+                    notify(`Exported ${filteredReceipts.length} receipts to CSV`);
+                  }}
+                >
+                  <FileSpreadsheet size={14} color="#047857" /> Export as CSV (.csv)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportInvoicesToJson(filteredReceipts);
+                    setExportMenuOpen(false);
+                    notify(`Exported ${filteredReceipts.length} receipts to JSON`);
+                  }}
+                >
+                  <FileText size={14} color="#047857" /> Export as JSON (.json)
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button className="primary-btn" onClick={onIssueReceipt}>
+            <Plus size={15} /> Issue Receipt
+          </button>
+        </div>
+      </div>
+
+      {/* Hero Stats */}
+      <div className="payments-hero" style={{ background: "linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 100%)", borderColor: "#A7F3D0" }}>
+        <Receipt size={38} color="#047857" />
+        <div>
+          <span>Total Received in Receipts</span>
+          <strong style={{ color: "#065F46" }}>{money(stats.totalCollected)}</strong>
+        </div>
+        <div>
+          <span>Bank Transfers</span>
+          <strong style={{ color: "#047857" }}>{money(stats.bankTotal)}</strong>
+        </div>
+        <div>
+          <span>Cash / Other</span>
+          <strong style={{ color: "#047857" }}>{money(stats.cashTotal)}</strong>
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="filter-tabs">
+        <button
+          className={methodFilter === "all" ? "active" : ""}
+          onClick={() => setMethodFilter("all")}
+        >
+          All Receipts <span className="filter-tab-count">{receipts.length}</span>
+        </button>
+        <button
+          className={methodFilter === "bank" ? "active" : ""}
+          onClick={() => setMethodFilter("bank")}
+        >
+          Bank Transfer
+        </button>
+        <button
+          className={methodFilter === "cash" ? "active" : ""}
+          onClick={() => setMethodFilter("cash")}
+        >
+          Cash
+        </button>
+        <button
+          className={methodFilter === "card" ? "active" : ""}
+          onClick={() => setMethodFilter("card")}
+        >
+          Card / POS
+        </button>
+        <button
+          className={methodFilter === "cheque" ? "active" : ""}
+          onClick={() => setMethodFilter("cheque")}
+        >
+          Cheque
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Receipt #</th>
+              <th>Customer</th>
+              <th>Linked Invoice</th>
+              <th>Receipt Date</th>
+              <th>Payment Method</th>
+              <th>Amount Received (AED)</th>
+              <th>Notes / Ref</th>
+              <th style={{ textAlign: "right" }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredReceipts.length === 0 && (
+              <tr>
+                <td colSpan={8}>
+                  <EmptyRows text="No payment receipts issued yet. Click 'Issue Receipt' to record a customer payment." />
+                </td>
+              </tr>
+            )}
+            {filteredReceipts.map((r) => (
+              <tr key={r.id}>
+                <td>
+                  <button
+                    type="button"
+                    className="invoice-link"
+                    onClick={() => onPreviewReceipt(r)}
+                    title="Click to view & print receipt voucher"
+                  >
+                    {r.id}
+                  </button>
+                </td>
+                <td>
+                  <div>
+                    <strong>{r.customer}</strong>
+                    {r.customerPhone && (
+                      <div style={{ fontSize: 11, color: "#64748b" }}>
+                        {r.customerPhone}
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td>
+                  {r.referenceInvoiceId ? (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "#0369A1",
+                        background: "#E0F2FE",
+                        padding: "2px 7px",
+                        borderRadius: 6,
+                      }}
+                    >
+                      #{r.referenceInvoiceId}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 11, color: "#94A3B8" }}>Direct / Sale</span>
+                  )}
+                </td>
+                <td>{r.issued}</td>
+                <td>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: "#065F46",
+                      background: "#D1FAE5",
+                      padding: "2px 8px",
+                      borderRadius: 10,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <CreditCard size={11} /> {r.paymentMethod || "Bank Transfer"}
+                  </span>
+                </td>
+                <td>
+                  <strong style={{ color: "#047857" }}>{money(r.amount)}</strong>
+                </td>
+                <td>
+                  <span style={{ fontSize: 11, color: "#64748B" }}>
+                    {r.notes || "—"}
+                  </span>
+                </td>
+                <td>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                      gap: 6,
+                    }}
+                  >
+                    {/* Preview / Print Button */}
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      title="Preview & Print Receipt Voucher"
+                      onClick={() => onPreviewReceipt(r)}
+                    >
+                      <Eye size={14} />
+                    </button>
+
+                    {/* WhatsApp Share Button */}
+                    <button
+                      type="button"
+                      className="btn-whatsapp-icon"
+                      title="Share receipt via WhatsApp"
+                      onClick={() => setShareWhatsAppInvoice(r)}
+                    >
+                      <MessageSquare size={13} />
+                    </button>
+
+                    {/* Delete Button */}
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      title="Delete receipt"
+                      onClick={() => handleDelete(r.id)}
+                    >
+                      <Trash2 size={14} color="#ef4444" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {shareWhatsAppInvoice && (
+        <WhatsAppShareModal
+          invoice={shareWhatsAppInvoice}
+          company={company}
+          close={() => setShareWhatsAppInvoice(null)}
+          notify={notify}
+        />
+      )}
+    </section>
+  );
+}
+
+function PaymentsView({
+  invoices,
+  setInvoices: _setInvoices,
+  company: _company,
+  onRecordPayment,
+  onPreviewInvoice,
+  notify,
+}: {
+  invoices: Invoice[];
+  setInvoices?: React.Dispatch<React.SetStateAction<Invoice[]>>;
+  company?: Company;
+  onRecordPayment?: (invoice?: Invoice) => void;
+  onPreviewInvoice?: (inv: Invoice) => void;
+  notify?: (s: string, t?: Toast["tone"]) => void;
+}) {
+  const [subTab, setSubTab] = useState<"ledger" | "receivables">("ledger");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const officialInvoices = useMemo(() => {
+    return invoices.filter(
+      (i) =>
+        i.documentType === "invoice" ||
+        (!i.documentType && !i.id.startsWith("PI-") && !i.id.startsWith("REC-")),
+    );
+  }, [invoices]);
+
+  const receipts = useMemo(() => {
+    return invoices.filter(
+      (i) => i.documentType === "receipt" || i.id.startsWith("REC-"),
+    );
+  }, [invoices]);
+
+  const totalInvoiced = useMemo(
+    () => officialInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0),
+    [officialInvoices],
+  );
+
+  const totalCollectedFromInvoices = useMemo(
+    () =>
+      officialInvoices
+        .filter((inv) => inv.status === "Paid")
+        .reduce((sum, inv) => sum + (inv.amount || 0), 0),
+    [officialInvoices],
+  );
+
+  const totalCollectedFromReceipts = useMemo(
+    () => receipts.reduce((sum, r) => sum + (r.amount || 0), 0),
+    [receipts],
+  );
+
+  // Overall collected amount
+  const collected = Math.max(totalCollectedFromInvoices, totalCollectedFromReceipts);
+  const pending = Math.max(0, totalInvoiced - collected);
+  const collectionRate = totalInvoiced > 0 ? (collected / totalInvoiced) * 100 : 0;
+
+  // Unpaid invoices
+  const unpaidInvoices = useMemo(() => {
+    return officialInvoices.filter((i) => i.status !== "Paid");
+  }, [officialInvoices]);
+
+  // Combined ledger entries: receipts + paid invoices (avoiding duplicates if receipt linked)
+  const ledgerEntries = useMemo(() => {
+    const list: Array<{
+      id: string;
+      date: string;
+      customer: string;
+      linkedDoc?: string;
+      method: string;
+      amount: number;
+      raw: Invoice;
+    }> = [];
+
+    // Add receipts
+    receipts.forEach((r) => {
+      list.push({
+        id: r.id,
+        date: r.issued,
+        customer: r.customer,
+        linkedDoc: r.referenceInvoiceId ? `#${r.referenceInvoiceId}` : undefined,
+        method: r.paymentMethod || "Bank Transfer",
+        amount: r.amount,
+        raw: r,
+      });
+    });
+
+    // Add paid invoices that do not already have a linked receipt in the list
+    const linkedRefIds = new Set(receipts.map((r) => r.referenceInvoiceId).filter(Boolean));
+    officialInvoices
+      .filter((i) => i.status === "Paid" && !linkedRefIds.has(i.id))
+      .forEach((inv) => {
+        list.push({
+          id: `PMT-${inv.id}`,
+          date: inv.issued,
+          customer: inv.customer,
+          linkedDoc: `#${inv.id}`,
+          method: inv.paymentMethod || "Settled",
+          amount: inv.amount,
+          raw: inv,
+        });
+      });
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      return list.filter(
+        (e) =>
+          e.id.toLowerCase().includes(q) ||
+          e.customer.toLowerCase().includes(q) ||
+          (e.linkedDoc && e.linkedDoc.toLowerCase().includes(q)) ||
+          e.method.toLowerCase().includes(q) ||
+          String(e.amount).includes(q),
+      );
+    }
+    return list;
+  }, [receipts, officialInvoices, searchQuery]);
+
   return (
     <section className="desk-panel desk-page">
       <div className="panel-head">
         <div>
           <h2>Payments</h2>
-          <p>Payment records and reconciliation</p>
+          <p>Payment records, collection metrics, and receivables ledger</p>
         </div>
-        <button className="primary-btn">
-          <Plus /> Record payment
+        <div className="top-actions">
+          <button
+            type="button"
+            className="secondary-btn"
+            onClick={() => {
+              exportInvoicesToCsv(receipts.length > 0 ? receipts : officialInvoices.filter((i) => i.status === "Paid"));
+              notify?.("Exported payment records to CSV");
+            }}
+          >
+            <FileDown size={14} /> Export Ledger
+          </button>
+          {onRecordPayment && (
+            <button className="primary-btn" onClick={() => onRecordPayment()}>
+              <Plus size={15} /> Record Payment
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* KPI Hero */}
+      <div className="payments-hero">
+        <CircleDollarSign size={40} color="#047857" />
+        <div>
+          <span>Total Invoiced</span>
+          <strong style={{ color: "#0F172A" }}>{money(totalInvoiced)}</strong>
+        </div>
+        <div>
+          <span>Total Collected</span>
+          <strong style={{ color: "#047857" }}>{money(collected)}</strong>
+        </div>
+        <div>
+          <span>Outstanding Due</span>
+          <strong style={{ color: pending > 0 ? "#DC2626" : "#047857" }}>{money(pending)}</strong>
+        </div>
+        <div>
+          <span>Collection Rate</span>
+          <strong style={{ color: "#0F172A" }}>{collectionRate.toFixed(1)}%</strong>
+        </div>
+      </div>
+
+      {/* Sub tabs */}
+      <div className="filter-tabs">
+        <button
+          className={subTab === "ledger" ? "active" : ""}
+          onClick={() => setSubTab("ledger")}
+        >
+          Payment Transactions ({ledgerEntries.length})
+        </button>
+        <button
+          className={subTab === "receivables" ? "active" : ""}
+          onClick={() => setSubTab("receivables")}
+        >
+          Outstanding Invoices ({unpaidInvoices.length})
         </button>
       </div>
-      <div className="payments-hero">
-        <CircleDollarSign />
-        <div>
-          <span>Collected this month</span>
-          <strong>{money(collected)}</strong>
+
+      {subTab === "ledger" ? (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Voucher / Ref</th>
+                <th>Customer</th>
+                <th>Linked Invoice</th>
+                <th>Payment Date</th>
+                <th>Method</th>
+                <th>Amount Collected</th>
+                <th>Status</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ledgerEntries.length === 0 && (
+                <tr>
+                  <td colSpan={8}>
+                    <EmptyRows text="No payments recorded yet. Click 'Record Payment' to record your first customer settlement." />
+                  </td>
+                </tr>
+              )}
+              {ledgerEntries.map((e) => (
+                <tr key={e.id}>
+                  <td>
+                    <button
+                      type="button"
+                      className="invoice-link"
+                      onClick={() => onPreviewInvoice?.(e.raw)}
+                    >
+                      {e.id}
+                    </button>
+                  </td>
+                  <td>
+                    <strong>{e.customer}</strong>
+                  </td>
+                  <td>
+                    {e.linkedDoc ? (
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "#0369A1",
+                          background: "#E0F2FE",
+                          padding: "2px 7px",
+                          borderRadius: 6,
+                        }}
+                      >
+                        {e.linkedDoc}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 11, color: "#94A3B8" }}>Direct Sale</span>
+                    )}
+                  </td>
+                  <td>{e.date}</td>
+                  <td>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "#065F46",
+                        background: "#D1FAE5",
+                        padding: "2px 8px",
+                        borderRadius: 10,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <CreditCard size={11} /> {e.method}
+                    </span>
+                  </td>
+                  <td>
+                    <strong style={{ color: "#047857" }}>{money(e.amount)}</strong>
+                  </td>
+                  <td>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "#047857",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <CheckCircle2 size={13} /> Reconciled
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                      {onPreviewInvoice && (
+                        <button
+                          type="button"
+                          className="icon-btn"
+                          title="View & Print Voucher"
+                          onClick={() => onPreviewInvoice(e.raw)}
+                        >
+                          <Eye size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <div>
-          <span>Pending</span>
-          <strong>{money(pending)}</strong>
+      ) : (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Invoice</th>
+                <th>Customer</th>
+                <th>Issued</th>
+                <th>Due Date</th>
+                <th>Total Amount</th>
+                <th>Balance Due</th>
+                <th>Status</th>
+                <th style={{ textAlign: "right" }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {unpaidInvoices.length === 0 && (
+                <tr>
+                  <td colSpan={8}>
+                    <EmptyRows text="All invoices are fully settled! Zero outstanding receivables." />
+                  </td>
+                </tr>
+              )}
+              {unpaidInvoices.map((inv) => (
+                <tr key={inv.id}>
+                  <td>
+                    <button
+                      type="button"
+                      className="invoice-link"
+                      onClick={() => onPreviewInvoice?.(inv)}
+                    >
+                      {inv.id}
+                    </button>
+                  </td>
+                  <td>
+                    <strong>{inv.customer}</strong>
+                  </td>
+                  <td>{inv.issued}</td>
+                  <td>
+                    <span style={{ color: inv.status === "Overdue" ? "#DC2626" : "inherit", fontWeight: inv.status === "Overdue" ? 700 : "normal" }}>
+                      {inv.due}
+                    </span>
+                  </td>
+                  <td>{money(inv.amount)}</td>
+                  <td>
+                    <strong style={{ color: "#DC2626" }}>
+                      {money(inv.balanceDue !== undefined ? inv.balanceDue : inv.amount)}
+                    </strong>
+                  </td>
+                  <td>
+                    <StatusPill tone={inv.status === "Overdue" ? "red" : "blue"}>
+                      {inv.status}
+                    </StatusPill>
+                  </td>
+                  <td>
+                    <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                      {onRecordPayment && (
+                        <button
+                          type="button"
+                          className="primary-btn"
+                          style={{ padding: "5px 10px", fontSize: 11 }}
+                          onClick={() => onRecordPayment(inv)}
+                        >
+                          <CreditCard size={12} /> Collect Payment
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <div>
-          <span>Collection rate</span>
-          <strong>{collectionRate.toFixed(1)}%</strong>
-        </div>
-      </div>
-      <InvoiceMiniTable
-        invoices={invoices.filter((i) => i.status === "Paid")}
-        open={() => { }}
-      />
+      )}
     </section>
+  );
+}
+
+function RecordPaymentModal({
+  isOpen,
+  invoices,
+  preselectedInvoice,
+  close,
+  onSavePayment,
+}: {
+  isOpen: boolean;
+  invoices: Invoice[];
+  preselectedInvoice?: Invoice | null;
+  close: () => void;
+  onSavePayment: (data: {
+    invoiceId?: string;
+    customer: string;
+    customerPhone?: string;
+    customerEmail?: string;
+    amount: number;
+    paymentMethod: string;
+    paymentDate: string;
+    notes?: string;
+    issueReceipt: boolean;
+  }) => void;
+}) {
+  const eligibleInvoices = useMemo(() => {
+    return invoices.filter(
+      (inv) =>
+        (inv.documentType === "invoice" ||
+          (!inv.documentType && !inv.id.startsWith("PI-") && !inv.id.startsWith("REC-"))) &&
+        inv.status !== "Paid",
+    );
+  }, [invoices]);
+
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>(() => {
+    return preselectedInvoice?.id || (eligibleInvoices[0]?.id || "");
+  });
+
+  const activeInvoice = useMemo(() => {
+    return invoices.find((i) => i.id === selectedInvoiceId) || preselectedInvoice || null;
+  }, [invoices, selectedInvoiceId, preselectedInvoice]);
+
+  const [customer, setCustomer] = useState(() => activeInvoice?.customer || "");
+  const [customerPhone, setCustomerPhone] = useState(() => activeInvoice?.customerPhone || "");
+  const [customerEmail, setCustomerEmail] = useState(() => activeInvoice?.customerEmail || "");
+  const [amount, setAmount] = useState<number>(() => {
+    if (activeInvoice) {
+      return activeInvoice.balanceDue !== undefined ? activeInvoice.balanceDue : activeInvoice.amount;
+    }
+    return 0;
+  });
+  const [paymentMethod, setPaymentMethod] = useState<string>("Bank Transfer");
+  const [paymentDate, setPaymentDate] = useState(() => new Date().toLocaleDateString());
+  const [notes, setNotes] = useState("");
+  const [issueReceipt, setIssueReceipt] = useState(true);
+
+  useEffect(() => {
+    if (activeInvoice) {
+      setCustomer(activeInvoice.customer);
+      setCustomerPhone(activeInvoice.customerPhone || "");
+      setCustomerEmail(activeInvoice.customerEmail || "");
+      const due = activeInvoice.balanceDue !== undefined ? activeInvoice.balanceDue : activeInvoice.amount;
+      setAmount(due);
+    }
+  }, [activeInvoice]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customer.trim()) {
+      alert("Please enter customer name");
+      return;
+    }
+    if (amount <= 0) {
+      alert("Please enter a valid payment amount greater than 0");
+      return;
+    }
+    onSavePayment({
+      invoiceId: selectedInvoiceId || undefined,
+      customer: customer.trim(),
+      customerPhone: customerPhone.trim() || undefined,
+      customerEmail: customerEmail.trim() || undefined,
+      amount,
+      paymentMethod,
+      paymentDate,
+      notes: notes.trim() || undefined,
+      issueReceipt,
+    });
+    close();
+  };
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal" style={{ width: 560, maxWidth: "95vw" }}>
+        <div className="modal-head">
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "#D1FAE5",
+                color: "#047857",
+                display: "grid",
+                placeItems: "center",
+              }}
+            >
+              <CreditCard size={18} />
+            </span>
+            <div>
+              <span className="eyebrow" style={{ color: "#047857" }}>
+                SETTLEMENT & PAYMENT
+              </span>
+              <h2 style={{ fontSize: 17, margin: 0 }}>Record Customer Payment</h2>
+            </div>
+          </div>
+          <button type="button" onClick={close} className="icon-btn">
+            <X size={15} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6, color: "#334155" }}>
+              Settle Invoice (Optional)
+            </label>
+            <select
+              style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13 }}
+              value={selectedInvoiceId}
+              onChange={(e) => setSelectedInvoiceId(e.target.value)}
+            >
+              <option value="">— Direct / Unlinked Cash Receipt —</option>
+              {eligibleInvoices.map((inv) => (
+                <option key={inv.id} value={inv.id}>
+                  {inv.id} · {inv.customer} (Balance: {money(inv.balanceDue !== undefined ? inv.balanceDue : inv.amount)})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6, color: "#334155" }}>
+                Customer Name *
+              </label>
+              <input
+                type="text"
+                required
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13 }}
+                value={customer}
+                onChange={(e) => setCustomer(e.target.value)}
+                placeholder="e.g. Emirates Trading"
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6, color: "#334155" }}>
+                Phone Number
+              </label>
+              <input
+                type="text"
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13 }}
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                placeholder="+971 50 ..."
+              />
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 12 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6, color: "#334155" }}>
+                Payment Amount (AED) *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                required
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 14, fontWeight: 700, color: "#065F46" }}
+                value={amount}
+                onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6, color: "#334155" }}>
+                Payment Method
+              </label>
+              <select
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13 }}
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+              >
+                <option value="Bank Transfer">Bank Transfer (Wire)</option>
+                <option value="Cash">Cash at Counter</option>
+                <option value="Credit Card">Credit / Debit Card</option>
+                <option value="Cheque">Bank Cheque</option>
+                <option value="Online">Online / Payment Gateway</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6, color: "#334155" }}>
+                Payment Date
+              </label>
+              <input
+                type="text"
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13 }}
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, marginBottom: 6, color: "#334155" }}>
+                Transaction Ref / Notes
+              </label>
+              <input
+                type="text"
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13 }}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="e.g. Ref #TXN-9021 or Cheque #104"
+              />
+            </div>
+          </div>
+
+          <label style={{ display: "flex", alignItems: "center", gap: 10, background: "#F8FAFC", padding: "10px 14px", borderRadius: 8, border: "1px solid #E2E8F0", cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={issueReceipt}
+              onChange={(e) => setIssueReceipt(e.target.checked)}
+              style={{ width: 16, height: 16, accentColor: "#047857" }}
+            />
+            <div style={{ fontSize: 12 }}>
+              <strong style={{ display: "block", color: "#1E293B" }}>
+                Generate official Payment Receipt (REC-xxxx)
+              </strong>
+              <span style={{ color: "#64748B" }}>
+                Creates a printable receipt voucher saved in Receipts section.
+              </span>
+            </div>
+          </label>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
+            <button type="button" className="secondary-btn" onClick={close}>
+              Cancel
+            </button>
+            <button type="submit" className="primary-btn">
+              <Check size={14} /> Record & Confirm Payment
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -5174,6 +6725,7 @@ function NewInvoiceModal({
   customers = [],
   prefilledCustomer,
   editingInvoice,
+  defaultDocumentType = "invoice",
   close,
   save,
 }: {
@@ -5185,12 +6737,21 @@ function NewInvoiceModal({
   customers?: Customer[];
   prefilledCustomer?: Customer | null;
   editingInvoice?: Invoice | null;
+  defaultDocumentType?: "invoice" | "proforma" | "receipt";
   close: () => void;
   save: (invoice: Invoice) => void;
 }) {
   const isGuest =
     company.id === GUEST_COMPANY_ID ||
     String(company.plan || "").toLowerCase().includes("guest");
+
+  const docType =
+    editingInvoice?.documentType ||
+    (editingInvoice?.id?.startsWith("PI-") ? "proforma" : undefined) ||
+    (editingInvoice?.id?.startsWith("REC-") ? "receipt" : undefined) ||
+    defaultDocumentType ||
+    "invoice";
+  const [documentType] = useState<"invoice" | "proforma" | "receipt">(docType);
 
   const [viewMode, setViewMode] = useState<"sheet" | "split" | "preview">("sheet");
   const [splitZoom, setSplitZoom] = useState<number>(0.72);
@@ -5213,9 +6774,12 @@ function NewInvoiceModal({
     () => editingInvoice?.customerEmail || prefilledCustomer?.email || "",
   );
   const [notes, setNotes] = useState(() => editingInvoice?.notes || "");
-  const [invoiceId, setInvoiceId] = useState(() =>
-    editingInvoice?.id || getNextInvoiceNumber(invoices),
-  );
+  const [invoiceId, setInvoiceId] = useState(() => {
+    if (editingInvoice?.id) return editingInvoice.id;
+    if (docType === "proforma") return getNextProformaNumber(invoices);
+    if (docType === "receipt") return getNextReceiptNumber(invoices);
+    return getNextInvoiceNumber(invoices);
+  });
   const [issued, setIssued] = useState(
     () => editingInvoice?.issued || new Date().toLocaleDateString(),
   );
@@ -5347,6 +6911,7 @@ function NewInvoiceModal({
       balanceDue,
       isTaxInvoice,
       notes: notes.trim() || undefined,
+      documentType,
     }),
     [
       company,
@@ -5365,6 +6930,7 @@ function NewInvoiceModal({
       balanceDue,
       isTaxInvoice,
       notes,
+      documentType,
     ],
   );
 
@@ -5381,7 +6947,10 @@ function NewInvoiceModal({
     issued,
     due,
     amount: total,
-    status: targetStatus || editingInvoice?.status || "Draft",
+    status:
+      targetStatus ||
+      editingInvoice?.status ||
+      (documentType === "proforma" ? "Pending" : "Draft"),
     template: selectedTemplate,
     notes: notes.trim() || undefined,
     subtotal,
@@ -5390,6 +6959,7 @@ function NewInvoiceModal({
     advancePaid: advancePaid > 0 ? advancePaid : undefined,
     balanceDue,
     isTaxInvoice,
+    documentType,
     items: lines
       .filter((l) => l.description.trim() || l.rate > 0)
       .map((l) => ({
@@ -5428,10 +6998,22 @@ function NewInvoiceModal({
                 className="eyebrow"
                 style={{ color: currentTemplate.accent, fontSize: 10 }}
               >
-                {editingInvoice ? "SALES INVOICE EDITOR" : "SALES INVOICE GENERATOR"}
+                {editingInvoice
+                  ? documentType === "proforma"
+                    ? "PROFORMA INVOICE EDITOR"
+                    : documentType === "receipt"
+                      ? "PAYMENT RECEIPT EDITOR"
+                      : "SALES INVOICE EDITOR"
+                  : documentType === "proforma"
+                    ? "PROFORMA INVOICE GENERATOR / ESTIMATE"
+                    : documentType === "receipt"
+                      ? "PAYMENT RECEIPT GENERATOR"
+                      : "SALES INVOICE GENERATOR"}
               </span>
               <h2 style={{ fontSize: 17, margin: 0, color: "#0f172a" }}>
-                {editingInvoice ? `Edit Invoice ${invoiceId}` : `Invoice ${invoiceId}`}
+                {editingInvoice
+                  ? `Edit ${documentType === "proforma" ? "Proforma" : documentType === "receipt" ? "Receipt" : "Invoice"} ${invoiceId}`
+                  : `${documentType === "proforma" ? "Proforma" : documentType === "receipt" ? "Receipt" : "Invoice"} ${invoiceId}`}
               </h2>
             </div>
           </div>
@@ -6153,6 +7735,7 @@ function InvoicePreview({
   onStatusChange,
   onTemplateChange,
   onEdit,
+  onConvertToInvoice,
   notify,
 }: {
   company: Company;
@@ -6161,6 +7744,7 @@ function InvoicePreview({
   onStatusChange?: (newStatus: string) => void;
   onTemplateChange?: (newTemplate: string) => void;
   onEdit?: (invoice: Invoice) => void;
+  onConvertToInvoice?: (proforma: Invoice) => void;
   notify: (s: string, t?: Toast["tone"]) => void;
 }) {
   const isGuest =
@@ -6236,6 +7820,15 @@ function InvoicePreview({
     balanceDue,
     isTaxInvoice: isTax,
     notes: invoice.notes,
+    documentType:
+      invoice.documentType ||
+      (invoice.id.startsWith("PI-")
+        ? "proforma"
+        : invoice.id.startsWith("REC-")
+          ? "receipt"
+          : "invoice"),
+    paymentMethod: invoice.paymentMethod,
+    referenceInvoiceId: invoice.referenceInvoiceId,
   };
 
   const renderedHtml = populateInvoiceTemplate(selectedTemplateId, invoiceData);
@@ -6278,6 +7871,9 @@ function InvoicePreview({
     notify(`Template switched to ${tmpl?.name || id}`);
   };
 
+  const isProforma = invoice.documentType === "proforma" || invoice.id.startsWith("PI-");
+  const isReceipt = invoice.documentType === "receipt" || invoice.id.startsWith("REC-");
+
   return (
     <div className="modal-backdrop preview-bg">
       <div className="preview-shell" style={{ width: 920, maxWidth: "96vw" }}>
@@ -6288,7 +7884,14 @@ function InvoicePreview({
             </button>
             <span>
               <b>{invoice.id}</b>
-              <small>{company.name} · Preview & Print</small>
+              <small>
+                {company.name} ·{" "}
+                {isProforma
+                  ? "Performa Preview"
+                  : isReceipt
+                    ? "Receipt Voucher"
+                    : "Preview & Print"}
+              </small>
             </span>
 
             {/* Payment Status Dropdown inside Preview */}
@@ -6301,15 +7904,38 @@ function InvoicePreview({
                 title="Update payment status"
               >
                 <option value="Draft">Draft</option>
+                {isProforma && <option value="Pending">Pending</option>}
                 <option value="Sent">Sent</option>
                 <option value="Paid">Paid</option>
                 <option value="Overdue">Overdue</option>
+                {isProforma && <option value="Converted">Converted</option>}
                 <option value="Cancelled">Cancelled</option>
               </select>
             </div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {/* Convert Proforma Button if applicable */}
+            {isProforma &&
+              onConvertToInvoice &&
+              invoice.status !== "Converted" &&
+              !invoice.proformaConverted && (
+                <button
+                  type="button"
+                  className="primary-btn"
+                  style={{
+                    background: "linear-gradient(135deg, #0284C7, #0369A1)",
+                  }}
+                  onClick={() => {
+                    close();
+                    onConvertToInvoice(invoice);
+                  }}
+                  title="Convert this quote directly into an official Tax Invoice"
+                >
+                  <Sparkles size={14} /> Convert to Tax Invoice
+                </button>
+              )}
+
             {/* Edit Invoice Button */}
             {onEdit && (
               <button
@@ -6319,10 +7945,10 @@ function InvoicePreview({
                   close();
                   onEdit(invoice);
                 }}
-                title="Edit / Update invoice details"
+                title="Edit / Update details"
                 data-testid="preview-edit-invoice-btn"
               >
-                <Pencil size={14} color="#047857" /> Edit Invoice
+                <Pencil size={14} color="#047857" /> Edit
               </button>
             )}
 

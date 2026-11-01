@@ -101,6 +101,11 @@ export interface Invoice {
   advancePaid?: number;
   balanceDue?: number;
   isTaxInvoice?: boolean;
+  documentType?: "invoice" | "proforma" | "receipt";
+  paymentMethod?: string;
+  referenceInvoiceId?: string;
+  proformaConverted?: boolean;
+  receiptDate?: string;
 }
 export interface Product {
   id?: string;
