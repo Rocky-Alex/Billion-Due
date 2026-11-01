@@ -6,12 +6,30 @@ import pg from "pg";
 import nodemailer from "nodemailer";
 
 const { Pool } = pg;
-if (!process.env.DATABASE_URL)
-  throw new Error("DATABASE_URL is required in .env.local");
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-  max: 8,
+let poolInstance = null;
+function getPool() {
+  if (!poolInstance) {
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) {
+      throw new Error(
+        "DATABASE_URL is required in environment variables (Vercel Project Settings or .env.local)",
+      );
+    }
+    poolInstance = new Pool({
+      connectionString: dbUrl,
+      ssl: { rejectUnauthorized: false },
+      max: 8,
+    });
+  }
+  return poolInstance;
+}
+
+const pool = new Proxy({}, {
+  get(_, prop) {
+    const p = getPool();
+    const val = p[prop];
+    return typeof val === "function" ? val.bind(p) : val;
+  },
 });
 const port = Number(process.env.API_PORT || 8787);
 const origin = process.env.WEB_ORIGIN || "http://localhost:3001";
@@ -262,16 +280,21 @@ function getPlanOfflineHours(plan, devicesAllowed, offlineLeaseOverride) {
   return 48;
 }
 
-if (process.env.AUTO_MIGRATE === "true") {
-  const schema = await fs.readFile(
-    new URL("./db/schema.sql", import.meta.url),
-    "utf8",
-  );
-  await pool.query(schema);
-}
+let dbInitPromise = null;
+async function ensureDbInitialized() {
+  if (dbInitPromise) return dbInitPromise;
+  if (!process.env.DATABASE_URL) return;
+  dbInitPromise = (async () => {
+    try {
+      if (process.env.AUTO_MIGRATE === "true") {
+        const schema = await fs.readFile(
+          new URL("./db/schema.sql", import.meta.url),
+          "utf8",
+        );
+        await pool.query(schema);
+      }
 
-try {
-  await pool.query(`
+      await pool.query(`
     CREATE TABLE IF NOT EXISTS admin_users (
       id text PRIMARY KEY,
       email text NOT NULL UNIQUE,
@@ -400,8 +423,11 @@ try {
       );
     }
   }
-} catch (err) {
-  console.error("Migration notice:", err.message);
+    } catch (err) {
+      console.error("Migration notice:", err.message);
+    }
+  })();
+  return dbInitPromise;
 }
 
 const json = (res, status, body) => {
@@ -420,13 +446,20 @@ const audit = (client, companyId, action, entityType, entityId, data = {}) =>
     [companyId, "software-owner", action, entityType, entityId, data],
   );
 
-const server = http.createServer(async (req, res) => {
+export async function handleApiRequest(req, res) {
+  if (req.url && !req.url.startsWith("/api")) {
+    req.url = "/api" + (req.url.startsWith("/") ? req.url : "/" + req.url);
+  }
   const reqOrigin = req.headers.origin;
   let allowOrigin = origin;
   if (reqOrigin) {
     try {
       const u = new URL(reqOrigin);
-      if (u.hostname === "localhost" || u.hostname === "127.0.0.1") {
+      if (
+        u.hostname === "localhost" ||
+        u.hostname === "127.0.0.1" ||
+        u.hostname.endsWith(".vercel.app")
+      ) {
         allowOrigin = reqOrigin;
       }
     } catch { }
@@ -446,8 +479,17 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(204);
     return res.end();
   }
+
+  await ensureDbInitialized();
+
   try {
     if (req.url === "/api/health" && req.method === "GET") {
+      if (!process.env.DATABASE_URL) {
+        return json(res, 200, {
+          ok: false,
+          warning: "DATABASE_URL is not configured in Vercel project environment variables.",
+        });
+      }
       await pool.query("SELECT 1");
       return json(res, 200, { ok: true, database: "neon" });
     }
@@ -2149,8 +2191,15 @@ const server = http.createServer(async (req, res) => {
     console.error(error);
     return json(res, 500, { error: error.message || "Server error" });
   }
-});
+}
 
-server.listen(port, () =>
-  console.log(`BillionDue API listening on http://localhost:${port}`),
-);
+const server = http.createServer(handleApiRequest);
+
+if (!process.env.VERCEL) {
+  server.listen(port, () =>
+    console.log(`BillionDue API listening on http://localhost:${port}`),
+  );
+}
+
+export { server, pool };
+export default handleApiRequest;

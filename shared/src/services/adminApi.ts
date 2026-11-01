@@ -1,4 +1,10 @@
-const API = ((import.meta as any).env?.VITE_API_URL as string) || "http://localhost:8787/api";
+const API =
+  ((import.meta as any).env?.VITE_API_URL as string) ||
+  (typeof window !== "undefined" &&
+  window.location.hostname !== "localhost" &&
+  window.location.hostname !== "127.0.0.1"
+    ? "/api"
+    : "http://localhost:8787/api");
 export const windowsInstallerUrl = `${API}/downloads/windows`;
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

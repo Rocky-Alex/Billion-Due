@@ -1,0 +1,19 @@
+{
+  "buildCommand": "npm run build:website",
+  "outputDirectory": "website/dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api",
+      "destination": "/api/index.mjs"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.mjs"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
