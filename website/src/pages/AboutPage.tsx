@@ -190,3 +190,4 @@ export function AboutPage({ navigate }: AboutPageProps) {
     </main>
   );
 }
+

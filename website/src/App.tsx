@@ -180,7 +180,20 @@ export function App() {
 
   useEffect(() => {
     if (!role) {
-      if (path !== "/login" && path !== "/") navigate("/", true);
+      const currentRoute = path.split("#")[0].split("?")[0];
+      const publicPaths = [
+        "/",
+        "/home",
+        "/products",
+        "/about",
+        "/about-us",
+        "/contact",
+        "/contact-us",
+        "/login",
+      ];
+      if (!publicPaths.includes(currentRoute)) {
+        navigate("/", true);
+      }
       return;
     }
     const expected = `/${role}/`;
@@ -419,29 +432,30 @@ export function App() {
         />
       );
     }
+    const currentRoute = path.split("#")[0].split("?")[0];
     return (
       <div className="w-full min-h-screen flex flex-col bg-[#F8F9FF] text-[#3D4A42] font-sans antialiased">
-        <SiteHeader currentPath={path} navigate={navigate} />
+        <SiteHeader currentPath={currentRoute} navigate={navigate} />
         <div className="flex-1">
-          {(path === "/" || path === "/home") && (
+          {(currentRoute === "/" || currentRoute === "/home") && (
             <HomePage navigate={navigate} notify={notify} />
           )}
-          {path === "/products" && (
+          {currentRoute === "/products" && (
             <ProductsPage navigate={navigate} notify={notify} />
           )}
-          {(path === "/about" || path === "/about-us") && (
+          {(currentRoute === "/about" || currentRoute === "/about-us") && (
             <AboutPage navigate={navigate} notify={notify} />
           )}
-          {(path === "/contact" || path === "/contact-us") && (
+          {(currentRoute === "/contact" || currentRoute === "/contact-us") && (
             <ContactPage navigate={navigate} notify={notify} />
           )}
-          {path !== "/" &&
-            path !== "/home" &&
-            path !== "/products" &&
-            path !== "/about" &&
-            path !== "/about-us" &&
-            path !== "/contact" &&
-            path !== "/contact-us" && (
+          {currentRoute !== "/" &&
+            currentRoute !== "/home" &&
+            currentRoute !== "/products" &&
+            currentRoute !== "/about" &&
+            currentRoute !== "/about-us" &&
+            currentRoute !== "/contact" &&
+            currentRoute !== "/contact-us" && (
               <HomePage navigate={navigate} notify={notify} />
             )}
         </div>

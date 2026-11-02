@@ -432,3 +432,4 @@ export function HomePage({ navigate, notify }: HomePageProps) {
     </main>
   );
 }
+

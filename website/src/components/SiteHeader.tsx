@@ -6,10 +6,11 @@ interface SiteHeaderProps {
 }
 
 export function SiteHeader({ currentPath, navigate }: SiteHeaderProps) {
-  const isHome = currentPath === "/" || currentPath === "/home";
-  const isProducts = currentPath === "/products";
-  const isAbout = currentPath === "/about" || currentPath === "/about-us";
-  const isContact = currentPath === "/contact" || currentPath === "/contact-us";
+  const route = currentPath.split("#")[0].split("?")[0];
+  const isHome = route === "/" || route === "/home";
+  const isProducts = route === "/products";
+  const isAbout = route === "/about" || route === "/about-us";
+  const isContact = route === "/contact" || route === "/contact-us";
 
   const goTo = (path: string) => {
     navigate(path);

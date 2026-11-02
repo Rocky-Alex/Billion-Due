@@ -397,3 +397,4 @@ export function ContactPage({ notify }: ContactPageProps) {
     </main>
   );
 }
+

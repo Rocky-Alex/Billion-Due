@@ -190,3 +190,4 @@ export function SiteFooter({ navigate }: SiteFooterProps) {
     </footer>
   );
 }
+
