@@ -15,6 +15,7 @@ export function LandingPage({
   notify,
 }: LandingPageProps) {
   const [activeTab, setActiveTab] = useState<TabType>("services");
+  const [pricingCurrency, setPricingCurrency] = useState<"AED" | "USD">("AED");
 
   // Keep in Touch form state (Services page)
   const [servicesFormData, setServicesFormData] = useState({
@@ -165,10 +166,9 @@ export function LandingPage({
             </button>
             <button
               onClick={() => onOpenPortalLogin()}
-              title="Client & Admin Portal Sign-In"
-              className="w-8 h-8 rounded-full bg-[#006948] hover:bg-[#005238] flex items-center justify-center shadow-sm text-white transition-all transform hover:scale-105"
+              className="flex items-center justify-center px-4 py-2 rounded-lg bg-[#006948] hover:bg-[#005238] text-white font-display font-semibold text-[15px] leading-[22px] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-all"
             >
-              <span className="material-symbols-outlined text-[18px]">person</span>
+              Client Portal Login
             </button>
           </div>
         </div>
@@ -822,9 +822,8 @@ export function LandingPage({
 
                 {/* Headline & Subtitle */}
                 <div className="mt-6 max-w-3xl">
-                  <h1 className="font-display font-extrabold text-[56px] leading-[64px] tracking-tight text-[#0B1C30] mb-4">
-                    Perpetual Software. <br />
-                    <span className="text-[#006948]">Zero Monthly Hostage.</span>
+                  <h1 className="font-display font-extrabold text-[56px] leading-[56px] tracking-[-1.4px] text-[#0B1C30] mb-4">
+                    Billion Due. Turn Invoice to Income.
                   </h1>
                   <p className="font-sans text-[18px] leading-[28px] text-[#3D4A42]">
                     We engineer standalone, lightning-fast commercial software tools that run directly on your hardware. No vendor lock-in, zero cloud subscription bloat, and ironclad local privacy built for ambitious GCC &amp; global operators.
@@ -1074,213 +1073,224 @@ export function LandingPage({
                 </div>
               </section>
 
-              {/* Additional In-House Products Grid */}
-              <section className="max-w-[1280px] mx-auto px-6 lg:px-12 pt-8 pb-10">
-                <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-2">
+              {/* Pricing Section for Perpetual Licences with Currency Toggle */}
+              <section className="max-w-[1280px] mx-auto px-6 lg:px-12 py-12">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                   <div>
-                    <span className="font-sans text-[11px] uppercase tracking-wider text-[#006948] font-semibold">
-                      Proprietary Software Suite
-                    </span>
-                    <h2 className="font-display font-bold text-[36px] leading-[44px] tracking-tight text-[#0B1C30] mt-0.5">
-                      More In-House Enterprise Tools
+                    <h2 className="font-display font-bold text-[36px] leading-[44px] tracking-[-0.9px] text-[#0B1C30]">
+                      Subscription.
                     </h2>
                   </div>
-                  <p className="font-sans text-[15px] leading-[24px] text-[#3D4A42] max-w-md">
-                    Field-tested software micro-systems engineered by Team BC Dev. Each product is available for standalone deployment or bespoke internal integration.
-                  </p>
+
+                  {/* Currency Toggle Switcher */}
+                  <div className="inline-flex items-center p-1 bg-[#E5EEFF] border border-[#D3E4FE] rounded-xl shadow-inner">
+                    <button
+                      type="button"
+                      onClick={() => setPricingCurrency("AED")}
+                      className={`px-4 py-1.5 rounded-lg font-sans text-[14px] leading-[20px] transition-all ${
+                        pricingCurrency === "AED"
+                          ? "bg-[#006948] text-white font-semibold shadow-sm"
+                          : "text-[#3D4A42] font-medium hover:text-[#0B1C30]"
+                      }`}
+                    >
+                      AED (د.إ)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPricingCurrency("USD")}
+                      className={`px-4 py-1.5 rounded-lg font-sans text-[14px] leading-[20px] transition-all ${
+                        pricingCurrency === "USD"
+                          ? "bg-[#006948] text-white font-semibold shadow-sm"
+                          : "text-[#3D4A42] font-medium hover:text-[#0B1C30]"
+                      }`}
+                    >
+                      USD ($)
+                    </button>
+                  </div>
                 </div>
 
-                {/* Bento-style 4 Products Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Product 1: StockNode POS & Inventory Matrix */}
-                  <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between border border-[#EFF4FF]">
+                {/* 3 Pricing Tiers Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                  {/* Tier 1: Starter */}
+                  <div className="bg-white rounded-xl border border-[#BCCAC0]/30 p-6 flex flex-col justify-between shadow-[0px_1px_2px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow">
                     <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-[#E5EEFF] flex items-center justify-center text-[#006948]">
-                          <span className="material-symbols-outlined text-[26px]">inventory_2</span>
-                        </div>
-                        <span className="px-3 py-0.5 rounded bg-[#E5EEFF] text-[#3D4A42] font-sans text-[11px]">
-                          Hardware Ready
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-sans font-semibold text-[11px] leading-[14px] tracking-[0.55px] uppercase text-[#3D4A42]">
+                          SINGLE DESK
+                        </span>
+                        <span className="bg-[#E5EEFF] text-[#3D4A42] font-sans font-semibold text-[11px] px-2 py-0.5 rounded">
+                          STARTER
                         </span>
                       </div>
-                      <div className="font-sans text-[11px] uppercase tracking-wider text-[#565E74] font-medium">
-                        Retail &amp; Warehouse Hardware
-                      </div>
-                      <h3 className="font-display font-bold text-[24px] text-[#0B1C30] mt-1 mb-2">
-                        StockNode Matrix
+                      <h3 className="font-display font-bold text-[24px] leading-[32px] tracking-[-0.36px] text-[#0B1C30]">
+                        Basic
                       </h3>
-                      <p className="font-sans text-[15px] text-[#3D4A42] mb-4">
-                        High-velocity stock and barcode synchronization engine. Communicates directly with wireless 1D/2D hand scanners and multiple retail floor terminals without relying on continuous internet connectivity.
+                      <p className="font-sans font-normal text-[13px] leading-[20px] text-[#3D4A42] mt-1 mb-4 min-h-[40px]">
+                        Perfect for boutique consultancies, single service desks, or freelance contractors.
                       </p>
-                      <ul className="space-y-2 font-sans text-[13px] text-[#0B1C30] mb-6">
+                      <div className="flex items-baseline gap-1.5 pb-5 border-b border-[#E5EEFF]">
+                        <span className="font-display font-extrabold text-[30px] leading-[36px] text-[#0B1C30]">
+                          {pricingCurrency === "AED" ? "AED 999" : "$270"}
+                        </span>
+                        <span className="font-sans font-medium text-[13px] text-[#3D4A42]">
+                          / perpetual licence
+                        </span>
+                      </div>
+                      <ul className="space-y-3 pt-5 font-sans text-[13px] leading-[20px] text-[#0B1C30]">
                         <li className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#006948]">check</span>
-                          <span>Offline buffer cache automatically syncs on network heartbeat</span>
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>1 Physical Workstation Activation</span>
                         </li>
                         <li className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#006948]">check</span>
-                          <span>Auto supplier requisition trigger when safety threshold is reached</span>
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Unlimited Invoices, Quotes &amp; Receipts</span>
                         </li>
                         <li className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#006948]">check</span>
-                          <span>Zebra, Honeywell &amp; Datalogic hardware driver compatibility</span>
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>AES-256 Encrypted SQLite Local Database</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Thermal &amp; PDF Custom Receipt Layouts</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Motherboard-Locked Offline Security</span>
                         </li>
                       </ul>
                     </div>
-                    <div className="pt-4 border-t border-[#EFF4FF] flex items-center justify-between">
-                      <span className="font-mono text-[12px] text-[#565E74]">STACK: RUST / SQLITE / SERIAL-IO</span>
+                    <div className="pt-6 mt-6 border-t border-[#E5EEFF]">
                       <a
-                        className="font-display font-semibold text-[15px] text-[#006948] hover:text-[#005238] inline-flex items-center gap-1"
-                        href="https://wa.me/971567064457?text=Interested%20in%20StockNode%20Matrix"
+                        href="https://wa.me/971567064457?text=Hello%2C%20I%20would%20like%20to%20order%20BillionDue%20Basic%20License"
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="w-full flex items-center justify-center py-2.5 px-4 rounded-lg bg-[#E5EEFF] hover:bg-[#D3E4FE] text-[#0B1C30] font-display font-medium text-[15px] transition-colors"
                       >
-                        Request Spec Sheet <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        Get Started
                       </a>
                     </div>
                   </div>
 
-                  {/* Product 2: Bespoke Portal OS */}
-                  <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between border border-[#EFF4FF]">
+                  {/* Tier 2: Plus (Featured - Most Popular) */}
+                  <div className="bg-white rounded-xl border-2 border-[#006948] p-6 flex flex-col justify-between shadow-[0px_10px_30px_-5px_rgba(0,105,72,0.15)] relative transform md:-translate-y-2">
+                    {/* Top Floating Badge */}
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#006948] text-white font-sans font-bold text-[11px] uppercase tracking-wider px-3.5 py-0.5 rounded-full shadow-sm">
+                      MOST POPULAR
+                    </div>
                     <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-[#E5EEFF] flex items-center justify-center text-[#006948]">
-                          <span className="material-symbols-outlined text-[26px]">devices_fold</span>
-                        </div>
-                        <span className="px-3 py-0.5 rounded bg-[#E5EEFF] text-[#3D4A42] font-sans text-[11px]">
-                          Self-Hosted SaaS
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-sans font-semibold text-[11px] leading-[14px] tracking-[0.55px] uppercase text-[#006948]">
+                          RETAIL &amp; WHOLESALE
+                        </span>
+                        <span className="bg-[#85F8C4]/20 text-[#006948] font-sans font-semibold text-[11px] px-2 py-0.5 rounded">
+                          PLUS TIER
                         </span>
                       </div>
-                      <div className="font-sans text-[11px] uppercase tracking-wider text-[#565E74] font-medium">
-                        Client Collaboration &amp; Sign-off
-                      </div>
-                      <h3 className="font-display font-bold text-[24px] text-[#0B1C30] mt-1 mb-2">
-                        Bespoke Portal OS
+                      <h3 className="font-display font-bold text-[24px] leading-[32px] tracking-[-0.36px] text-[#0B1C30]">
+                        Plus
                       </h3>
-                      <p className="font-sans text-[15px] text-[#3D4A42] mb-4">
-                        A private, white-labeled client cockpit for enterprise agencies and construction firms. Streamline architectural milestone sign-offs, deliver high-res CAD &amp; asset packets, and maintain transparent audit trails.
+                      <p className="font-sans font-normal text-[13px] leading-[20px] text-[#3D4A42] mt-1 mb-4 min-h-[40px]">
+                        Designed for scaling retail, pharmacies, automotive workshops, and wholesale desks.
                       </p>
-                      <ul className="space-y-2 font-sans text-[13px] text-[#0B1C30] mb-6">
+                      <div className="flex items-baseline gap-1.5 pb-5 border-b border-[#E5EEFF]">
+                        <span className="font-display font-extrabold text-[30px] leading-[36px] text-[#0B1C30]">
+                          {pricingCurrency === "AED" ? "AED 1,999" : "$545"}
+                        </span>
+                        <span className="font-sans font-medium text-[13px] text-[#3D4A42]">
+                          / perpetual licence
+                        </span>
+                      </div>
+                      <ul className="space-y-3 pt-5 font-sans text-[13px] leading-[20px] text-[#0B1C30]">
                         <li className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#006948]">check</span>
-                          <span>Passwordless magic links with tamper-proof token expiration</span>
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Up to 3 Networked Workstation Licenses</span>
                         </li>
                         <li className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#006948]">check</span>
-                          <span>Milestone approval logs with biometric/canvas e-signature</span>
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Multi-Currency &amp; UAE VAT Tax Compliance</span>
                         </li>
                         <li className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#006948]">check</span>
-                          <span>Deployable via single Docker container on your internal VPS</span>
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Real-Time Inventory &amp; Barcode Scanner Integration</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Automatic USB &amp; Network Backup Vaults</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Priority WhatsApp &amp; Remote Desktop Support</span>
                         </li>
                       </ul>
                     </div>
-                    <div className="pt-4 border-t border-[#EFF4FF] flex items-center justify-between">
-                      <span className="font-mono text-[12px] text-[#565E74]">STACK: NEXT.JS / GO / POSTGRES</span>
+                    <div className="pt-6 mt-6 border-t border-[#E5EEFF]">
                       <a
-                        className="font-display font-semibold text-[15px] text-[#006948] hover:text-[#005238] inline-flex items-center gap-1"
-                        href="https://wa.me/971567064457?text=Interested%20in%20Bespoke%20Portal%20OS"
+                        href="https://wa.me/971567064457?text=Hello%2C%20I%20would%20like%20to%20order%20BillionDue%20Plus%20License"
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="w-full flex items-center justify-center py-2.5 px-4 rounded-lg bg-[#006948] hover:bg-[#00855D] text-white font-display font-semibold text-[15px] shadow-[0_2px_8px_rgba(0,105,72,0.2)] transition-colors"
                       >
-                        Explore Architecture <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        Get Started
                       </a>
                     </div>
                   </div>
 
-                  {/* Product 3: SpeedEdge Headless CMS */}
-                  <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between border border-[#EFF4FF]">
+                  {/* Tier 3: Premium Multi-Branch */}
+                  <div className="bg-white rounded-xl border border-[#BCCAC0]/30 p-6 flex flex-col justify-between shadow-[0px_1px_2px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow">
                     <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-[#E5EEFF] flex items-center justify-center text-[#006948]">
-                          <span className="material-symbols-outlined text-[26px]">speed</span>
-                        </div>
-                        <span className="px-3 py-0.5 rounded bg-[#E5EEFF] text-[#3D4A42] font-sans text-[11px]">
-                          High Performance
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-sans font-semibold text-[11px] leading-[14px] tracking-[0.55px] uppercase text-[#3D4A42]">
+                          ENTERPRISE FLEET
+                        </span>
+                        <span className="bg-[#E5EEFF] text-[#3D4A42] font-sans font-semibold text-[11px] px-2 py-0.5 rounded">
+                          MULTI-BRANCH
                         </span>
                       </div>
-                      <div className="font-sans text-[11px] uppercase tracking-wider text-[#565E74] font-medium">
-                        Content Infrastructure
-                      </div>
-                      <h3 className="font-display font-bold text-[24px] text-[#0B1C30] mt-1 mb-2">
-                        SpeedEdge Headless CMS
+                      <h3 className="font-display font-bold text-[24px] leading-[32px] tracking-[-0.36px] text-[#0B1C30]">
+                        Premium
                       </h3>
-                      <p className="font-sans text-[15px] text-[#3D4A42] mb-4">
-                        Designed for luxury brands and fintech marketing desks that demand flawless 100/100 Google Lighthouse speed scores. Static pre-rendering combined with instant edge content invalidation.
+                      <p className="font-sans font-normal text-[13px] leading-[20px] text-[#3D4A42] mt-1 mb-4 min-h-[40px]">
+                        Unlimited tills, multi-warehouse consolidation, white-label branding, and dedicated engineering onboarding.
                       </p>
-                      <ul className="space-y-2 font-sans text-[13px] text-[#0B1C30] mb-6">
+                      <div className="flex items-baseline gap-1.5 pb-5 border-b border-[#E5EEFF]">
+                        <span className="font-display font-extrabold text-[30px] leading-[36px] text-[#0B1C30]">
+                          {pricingCurrency === "AED" ? "AED 3,999" : "$1,090"}
+                        </span>
+                        <span className="font-sans font-medium text-[13px] text-[#3D4A42]">
+                          / perpetual licence
+                        </span>
+                      </div>
+                      <ul className="space-y-3 pt-5 font-sans text-[13px] leading-[20px] text-[#0B1C30]">
                         <li className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#006948]">check</span>
-                          <span>Zero client-side JS runtime overhead for pure editorial content</span>
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Unlimited Tills &amp; Multi-Branch Fleet</span>
                         </li>
                         <li className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#006948]">check</span>
-                          <span>Git-backed Markdown &amp; JSON schema version control</span>
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Central PostgreSQL &amp; Offline Sync Engine</span>
                         </li>
                         <li className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#006948]">check</span>
-                          <span>Native AVIF/WebP image pipeline with automatic responsive srcsets</span>
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Custom ERP &amp; Accounting API Connectors</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Custom Thermal Invoice &amp; POS Schema Design</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <svg className="w-3.5 h-3.5 text-[#006948] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                          <span>Dedicated Engineering Onboarding &amp; SLA</span>
                         </li>
                       </ul>
                     </div>
-                    <div className="pt-4 border-t border-[#EFF4FF] flex items-center justify-between">
-                      <span className="font-mono text-[12px] text-[#565E74]">STACK: ASTRO / TAILWIND / EDGE WORKERS</span>
-                      <a
-                        className="font-display font-semibold text-[15px] text-[#006948] hover:text-[#005238] inline-flex items-center gap-1"
-                        href="https://wa.me/971567064457?text=Interested%20in%20SpeedEdge%20CMS"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <div className="pt-6 mt-6 border-t border-[#E5EEFF]">
+                      <button
+                        type="button"
+                        onClick={() => switchTab("contact")}
+                        className="w-full flex items-center justify-center py-2.5 px-4 rounded-lg bg-[#E5EEFF] hover:bg-[#D3E4FE] text-[#0B1C30] font-display font-medium text-[15px] transition-colors"
                       >
-                        View Benchmarks <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Product 4: LedgerSync Microservice */}
-                  <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between border border-[#EFF4FF]">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-[#E5EEFF] flex items-center justify-center text-[#006948]">
-                          <span className="material-symbols-outlined text-[26px]">account_balance</span>
-                        </div>
-                        <span className="px-3 py-0.5 rounded bg-[#E5EEFF] text-[#3D4A42] font-sans text-[11px]">
-                          Fintech Core
-                        </span>
-                      </div>
-                      <div className="font-sans text-[11px] uppercase tracking-wider text-[#565E74] font-medium">
-                        Reconciliation &amp; Banking API
-                      </div>
-                      <h3 className="font-display font-bold text-[24px] text-[#0B1C30] mt-1 mb-2">
-                        LedgerSync Microservice
-                      </h3>
-                      <p className="font-sans text-[15px] text-[#3D4A42] mb-4">
-                        Self-hosted financial reconciliation engine connecting Stripe, Checkout.com, Tap Payments, and standard MT940 bank feeds into double-entry accounting ledgers with webhook idempotency.
-                      </p>
-                      <ul className="space-y-2 font-sans text-[13px] text-[#0B1C30] mb-6">
-                        <li className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#006948]">check</span>
-                          <span>Guaranteed exactly-once execution for cross-currency payouts</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#006948]">check</span>
-                          <span>Automatic settlement variance detection and FX fee audits</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-[#006948]">check</span>
-                          <span>Air-gapped transaction signing and encrypted vault storage</span>
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="pt-4 border-t border-[#EFF4FF] flex items-center justify-between">
-                      <span className="font-mono text-[12px] text-[#565E74]">STACK: GOLANG / POSTGRESQL / NATS</span>
-                      <a
-                        className="font-display font-semibold text-[15px] text-[#006948] hover:text-[#005238] inline-flex items-center gap-1"
-                        href="https://wa.me/971567064457?text=Interested%20in%20LedgerSync"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Read API Docs <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                      </a>
+                        Contact Enterprise
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1311,8 +1321,15 @@ export function LandingPage({
                         <span>WhatsApp Direct: +971 567064457</span>
                       </a>
                       <button
+                        onClick={() => onOpenPortalLogin()}
+                        className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-display font-semibold text-[15px] px-6 py-2.5 rounded-lg transition-all shadow-sm backdrop-blur-sm"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">login</span>
+                        <span>Client Portal Login</span>
+                      </button>
+                      <button
                         onClick={() => switchTab("contact")}
-                        className="inline-flex items-center gap-2 bg-white/15 text-white hover:bg-white/25 font-display font-semibold text-[15px] px-6 py-2.5 rounded-lg transition-colors backdrop-blur-sm"
+                        className="inline-flex items-center gap-2 bg-transparent border border-white/40 text-white hover:bg-white/10 font-display font-semibold text-[15px] px-6 py-2.5 rounded-lg transition-colors"
                       >
                         <span className="material-symbols-outlined text-[20px]">calendar_month</span>
                         <span>Schedule Architecture Audit</span>
