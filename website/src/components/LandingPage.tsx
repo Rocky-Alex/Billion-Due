@@ -85,7 +85,7 @@ export function LandingPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FF] text-[#3D4A42] font-sans antialiased selection:bg-[#85F8C4] selection:text-[#002114]">
+    <div className="w-full min-h-screen overflow-x-hidden overflow-y-auto bg-[#F8F9FF] text-[#3D4A42] font-sans antialiased selection:bg-[#85F8C4] selection:text-[#002114]">
       {/* ====================================================================
           GLOBAL NAVIGATION HEADER (Exact Stitch Design)
           ==================================================================== */}
@@ -794,7 +794,7 @@ export function LandingPage({
         <main className="w-full bg-[#F8F9FF] min-h-screen">
           <div className="flex flex-col w-full">
             {/* Subtle Ambient Glows */}
-            <div className="relative w-full overflow-hidden">
+            <div className="relative w-full overflow-x-hidden">
               <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[900px] h-[350px] bg-gradient-to-r from-[#85F8C4]/20 via-[#00855D]/10 to-[#D3E4FE]/40 blur-3xl pointer-events-none -z-10 rounded-full"></div>
 
               {/* Top Introduction Banner */}
@@ -1344,7 +1344,7 @@ export function LandingPage({
         <main className="w-full bg-[#F8F9FF] min-h-[calc(100vh-80px)]">
           <div className="flex flex-col w-full">
             {/* Subtle Ambient Glow Canvas Decor */}
-            <div className="relative w-full max-w-7xl mx-auto px-6 lg:px-12 pt-8 pb-12 overflow-hidden">
+            <div className="relative w-full max-w-7xl mx-auto px-6 lg:px-12 pt-8 pb-12 overflow-x-hidden">
               <div className="absolute -top-32 -left-20 w-96 h-96 bg-[#85F8C4]/20 rounded-full blur-3xl pointer-events-none"></div>
               <div className="absolute top-1/3 -right-24 w-80 h-80 bg-[#DAE2FD]/25 rounded-full blur-3xl pointer-events-none"></div>
 
