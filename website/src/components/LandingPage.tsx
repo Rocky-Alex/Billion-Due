@@ -797,42 +797,8 @@ export function LandingPage({
             <div className="relative w-full overflow-x-hidden">
               <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[900px] h-[350px] bg-gradient-to-r from-[#85F8C4]/20 via-[#00855D]/10 to-[#D3E4FE]/40 blur-3xl pointer-events-none -z-10 rounded-full"></div>
 
-              {/* Top Introduction Banner */}
-              <div className="max-w-[1280px] mx-auto px-6 lg:px-12 pt-6 pb-4">
-                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E5EEFF]">
-                  <div className="flex items-center gap-4">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#00855D] text-[#F5FFF7] font-sans text-[11px] uppercase tracking-widest font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#85F8C4] animate-ping"></span>
-                      Software Catalog · Q2 2025
-                    </span>
-                    <span className="font-sans text-[13px] text-[#3D4A42]">
-                      4 Production-Ready Systems · Zero Subscription SaaS Traps
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 text-[#3D4A42] font-sans text-[12px] font-semibold">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[16px] text-[#006948]">verified_user</span> Air-Gapped Capable
-                    </span>
-                    <span className="hidden sm:inline">·</span>
-                    <span className="hidden sm:flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[16px] text-[#006948]">bolt</span> Sub-15ms Latency
-                    </span>
-                  </div>
-                </div>
-
-                {/* Headline & Subtitle */}
-                <div className="mt-6 max-w-3xl">
-                  <h1 className="font-display font-extrabold text-[56px] leading-[56px] tracking-[-1.4px] text-[#0B1C30] mb-4">
-                    Billion Due. Turn Invoice to Income.
-                  </h1>
-                  <p className="font-sans text-[18px] leading-[28px] text-[#3D4A42]">
-                    We engineer standalone, lightning-fast commercial software tools that run directly on your hardware. No vendor lock-in, zero cloud subscription bloat, and ironclad local privacy built for ambitious GCC &amp; global operators.
-                  </p>
-                </div>
-              </div>
-
               {/* Flagship Product Feature: BillionDue */}
-              <section className="max-w-[1280px] mx-auto px-6 lg:px-12 pt-4 pb-10">
+              <section className="max-w-[1280px] mx-auto px-6 lg:px-12 pt-8 pb-10">
                 <div className="bg-white rounded-xl p-6 lg:p-10 shadow-[0_10px_30px_-5px_rgba(11,28,48,0.06)] relative">
                   {/* Header Badge & Title Row */}
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6">
@@ -848,11 +814,11 @@ export function LandingPage({
                           <span className="w-1.5 h-1.5 rounded-full bg-[#006948]"></span> UAE FTA Certified Ready
                         </span>
                       </div>
-                      <h2 className="font-display font-bold text-[36px] leading-[44px] tracking-tight text-[#0B1C30]">
-                        BillionDue Desktop
-                      </h2>
-                      <p className="font-sans text-[15px] leading-[24px] text-[#3D4A42] mt-0.5">
-                        High-throughput offline-first billing, tax ledgering, and instant POS engine for GCC merchants and global agencies.
+                      <h1 className="font-display font-extrabold text-[36px] sm:text-[44px] leading-[44px] sm:leading-[52px] tracking-[-1px] text-[#0B1C30]">
+                        Billion Due. Turn Invoice to Income.
+                      </h1>
+                      <p className="font-sans text-[15px] sm:text-[16px] leading-[24px] sm:leading-[26px] text-[#3D4A42] mt-1 max-w-2xl">
+                        We engineer standalone, lightning-fast commercial software tools that run directly on your hardware. High-throughput offline-first billing, tax ledgering, and instant POS engine for GCC merchants and global agencies.
                       </p>
                     </div>
 
@@ -865,15 +831,6 @@ export function LandingPage({
                       >
                         <span className="material-symbols-outlined text-[20px]">download</span>
                         <span>Download Standalone v2.4</span>
-                      </a>
-                      <a
-                        href="https://wa.me/971567064457?text=Hi%20Team%20BC%20Dev,%20I'd%20like%20a%20live%20walkthrough%20of%20BillionDue"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 bg-[#E5EEFF] text-[#0B1C30] font-display font-semibold text-[15px] px-4 py-2.5 rounded-lg hover:bg-[#D3E4FE] transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[20px] text-[#006948]">video_call</span>
-                        <span>Request Live Walkthrough</span>
                       </a>
                     </div>
                   </div>
@@ -941,85 +898,6 @@ export function LandingPage({
                         <div className="font-sans text-[13px] text-[#3D4A42]">
                           Zero telemetry · Stored only on your device
                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 4-Card Deep Dive Grid for BillionDue */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-                    {/* Pillar 1 */}
-                    <div className="bg-[#EFF4FF] p-4 rounded-xl flex flex-col justify-between hover:bg-[#E5EEFF] transition-colors">
-                      <div>
-                        <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-[#006948] shadow-sm mb-2">
-                          <span className="material-symbols-outlined text-[24px]">database</span>
-                        </div>
-                        <h3 className="font-display font-semibold text-[18px] text-[#0B1C30] mb-1">
-                          Zero Cloud Hostage
-                        </h3>
-                        <p className="font-sans text-[13px] leading-[20px] text-[#3D4A42]">
-                          Your customer accounts and invoices stay securely on your hardware in an encrypted SQLite database. Zero monthly software rent, zero surprise server outages, and instant sub-12ms queries.
-                        </p>
-                      </div>
-                      <div className="mt-4 pt-2 border-t border-[#D3E4FE] flex items-center justify-between text-[11px] font-sans font-semibold text-[#006948]">
-                        <span>$0.00 / Mo Forever</span>
-                        <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                      </div>
-                    </div>
-
-                    {/* Pillar 2 */}
-                    <div className="bg-[#EFF4FF] p-4 rounded-xl flex flex-col justify-between hover:bg-[#E5EEFF] transition-colors">
-                      <div>
-                        <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-[#006948] shadow-sm mb-2">
-                          <span className="material-symbols-outlined text-[24px]">qr_code_2</span>
-                        </div>
-                        <h3 className="font-display font-semibold text-[18px] text-[#0B1C30] mb-1">
-                          UAE FTA &amp; GCC Tax Ready
-                        </h3>
-                        <p className="font-sans text-[13px] leading-[20px] text-[#3D4A42]">
-                          Engineered for Dubai, Abu Dhabi, Riyadh, and Doha merchant standards. Pre-configured 5% UAE VAT calculations, TLV/ZATCA/FTA validated QR generator, and dual English &amp; Arabic layouts.
-                        </p>
-                      </div>
-                      <div className="mt-4 pt-2 border-t border-[#D3E4FE] flex items-center justify-between text-[11px] font-sans font-semibold text-[#006948]">
-                        <span>1-Click WhatsApp PDF</span>
-                        <span className="material-symbols-outlined text-[16px]">send</span>
-                      </div>
-                    </div>
-
-                    {/* Pillar 3 */}
-                    <div className="bg-[#EFF4FF] p-4 rounded-xl flex flex-col justify-between hover:bg-[#E5EEFF] transition-colors">
-                      <div>
-                        <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-[#006948] shadow-sm mb-2">
-                          <span className="material-symbols-outlined text-[24px]">print</span>
-                        </div>
-                        <h3 className="font-display font-semibold text-[18px] text-[#0B1C30] mb-1">
-                          Direct Thermal POS Engine
-                        </h3>
-                        <p className="font-sans text-[13px] leading-[20px] text-[#3D4A42]">
-                          Designed for retail checkout desks, repair shops, and trade counters. Direct ESC/POS printing over USB &amp; Network to 80mm roll printers in 180ms without clunky browser print prompts.
-                        </p>
-                      </div>
-                      <div className="mt-4 pt-2 border-t border-[#D3E4FE] flex items-center justify-between text-[11px] font-sans font-semibold text-[#006948]">
-                        <span>USB / LAN ESC-POS</span>
-                        <span className="material-symbols-outlined text-[16px]">receipt</span>
-                      </div>
-                    </div>
-
-                    {/* Pillar 4 */}
-                    <div className="bg-[#EFF4FF] p-4 rounded-xl flex flex-col justify-between hover:bg-[#E5EEFF] transition-colors">
-                      <div>
-                        <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-[#006948] shadow-sm mb-2">
-                          <span className="material-symbols-outlined text-[24px]">currency_exchange</span>
-                        </div>
-                        <h3 className="font-display font-semibold text-[18px] text-[#0B1C30] mb-1">
-                          Multi-Currency Ledger
-                        </h3>
-                        <p className="font-sans text-[13px] leading-[20px] text-[#3D4A42]">
-                          Real-time tracking across AED, USD, EUR, CAD, and GBP. Maintain customer accounts balance sheets, generate statement PDFs, and review periodic revenue summaries with clean financial precision.
-                        </p>
-                      </div>
-                      <div className="mt-4 pt-2 border-t border-[#D3E4FE] flex items-center justify-between text-[11px] font-sans font-semibold text-[#006948]">
-                        <span>Instant Statement PDF</span>
-                        <span className="material-symbols-outlined text-[16px]">analytics</span>
                       </div>
                     </div>
                   </div>
