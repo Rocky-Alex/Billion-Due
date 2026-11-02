@@ -111,6 +111,12 @@ import {
   type Toast,
 } from "@billiondue/shared";
 import { LandingPage } from "./components/LandingPage";
+import { SiteHeader } from "./components/SiteHeader";
+import { SiteFooter } from "./components/SiteFooter";
+import { HomePage } from "./pages/HomePage";
+import { ProductsPage } from "./pages/ProductsPage";
+import { AboutPage } from "./pages/AboutPage";
+import { ContactPage } from "./pages/ContactPage";
 
 export function App() {
   const [role, setRole] = useState<PortalRole | null>(
@@ -414,13 +420,33 @@ export function App() {
       );
     }
     return (
-      <LandingPage
-        onLaunchApp={() => navigate("/login")}
-        onOpenPortalLogin={(_preferredRole) => {
-          navigate("/login");
-        }}
-        notify={notify}
-      />
+      <div className="w-full min-h-screen flex flex-col bg-[#F8F9FF] text-[#3D4A42] font-sans antialiased">
+        <SiteHeader currentPath={path} navigate={navigate} />
+        <div className="flex-1">
+          {(path === "/" || path === "/home") && (
+            <HomePage navigate={navigate} notify={notify} />
+          )}
+          {path === "/products" && (
+            <ProductsPage navigate={navigate} notify={notify} />
+          )}
+          {(path === "/about" || path === "/about-us") && (
+            <AboutPage navigate={navigate} notify={notify} />
+          )}
+          {(path === "/contact" || path === "/contact-us") && (
+            <ContactPage navigate={navigate} notify={notify} />
+          )}
+          {path !== "/" &&
+            path !== "/home" &&
+            path !== "/products" &&
+            path !== "/about" &&
+            path !== "/about-us" &&
+            path !== "/contact" &&
+            path !== "/contact-us" && (
+              <HomePage navigate={navigate} notify={notify} />
+            )}
+        </div>
+        <SiteFooter navigate={navigate} />
+      </div>
     );
   }
 
