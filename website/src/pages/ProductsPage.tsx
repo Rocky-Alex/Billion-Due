@@ -6,7 +6,7 @@ interface ProductsPageProps {
   notify?: (message: string, tone?: "ok" | "warn" | "danger") => void;
 }
 
-export function ProductsPage({}: ProductsPageProps) {
+export function ProductsPage({ }: ProductsPageProps) {
   const [currency, setCurrency] = useState<"AED" | "USD">("AED");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
@@ -185,14 +185,6 @@ export function ProductsPage({}: ProductsPageProps) {
                     <span className="material-symbols-outlined text-[18px]">window</span>
                     <span>Windows 10/11 x64</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => openDownloadModal("linux")}
-                    className="px-4 py-2 rounded-lg bg-white hover:bg-[#00855D] hover:text-white text-[#0B1C30] font-display font-semibold text-[14px] shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">terminal</span>
-                    <span>Linux (Debian / AppImage)</span>
-                  </button>
                 </div>
               </div>
             </div>
@@ -212,22 +204,20 @@ export function ProductsPage({}: ProductsPageProps) {
                 <button
                   type="button"
                   onClick={() => setCurrency("AED")}
-                  className={`px-4 py-1.5 rounded-lg text-sm transition-all cursor-pointer ${
-                    currency === "AED"
-                      ? "font-semibold shadow-sm bg-[#006948] text-white"
-                      : "font-medium text-[#3D4A42] hover:text-[#0B1C30]"
-                  }`}
+                  className={`px-4 py-1.5 rounded-lg text-sm transition-all cursor-pointer ${currency === "AED"
+                    ? "font-semibold shadow-sm bg-[#006948] text-white"
+                    : "font-medium text-[#3D4A42] hover:text-[#0B1C30]"
+                    }`}
                 >
                   AED (UAE Dirham)
                 </button>
                 <button
                   type="button"
                   onClick={() => setCurrency("USD")}
-                  className={`px-4 py-1.5 rounded-lg text-sm transition-all cursor-pointer ${
-                    currency === "USD"
-                      ? "font-semibold shadow-sm bg-[#006948] text-white"
-                      : "font-medium text-[#3D4A42] hover:text-[#0B1C30]"
-                  }`}
+                  className={`px-4 py-1.5 rounded-lg text-sm transition-all cursor-pointer ${currency === "USD"
+                    ? "font-semibold shadow-sm bg-[#006948] text-white"
+                    : "font-medium text-[#3D4A42] hover:text-[#0B1C30]"
+                    }`}
                 >
                   USD (US Dollar)
                 </button>
@@ -566,35 +556,6 @@ export function ProductsPage({}: ProductsPageProps) {
                   <span className="material-symbols-outlined text-[18px]">download</span>
                   <span>
                     {downloadingFile === "BillionDue Setup 0.1.0.exe" ? "Connecting..." : "Download for Windows"}
-                  </span>
-                </button>
-              </div>
-
-              {/* Linux Debian / AppImage Card */}
-              <div className="p-3.5 sm:p-4 rounded-xl border border-[#BCCAC0]/30 hover:border-[#006948]/50 bg-white transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-[#E5EEFF] flex items-center justify-center text-[#0B1C30] group-hover:text-[#006948] transition-colors flex-shrink-0">
-                    <span className="material-symbols-outlined text-[24px]">terminal</span>
-                  </div>
-                  <div>
-                    <div className="font-display font-semibold text-[15px] text-[#0B1C30] flex items-center gap-2 flex-wrap">
-                      Linux x86_64
-                      <span className="text-[11px] text-[#3D4A42] font-medium px-2 py-0.5 bg-[#E5EEFF] rounded-full">
-                        Debian (.deb) &amp; .AppImage
-                      </span>
-                    </div>
-                    <div className="text-[13px] text-[#3D4A42] mt-0.5">Portable standalone package · ~78.4 MB</div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  disabled={downloadingFile === "BillionDue-v2.4.2.AppImage"}
-                  onClick={() => triggerDownloadFile("BillionDue-v2.4.2.AppImage")}
-                  className="px-4 py-2 rounded-lg bg-[#E5EEFF] hover:bg-[#006948] hover:text-white text-[#0B1C30] font-display font-semibold text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
-                >
-                  <span className="material-symbols-outlined text-[18px]">download</span>
-                  <span>
-                    {downloadingFile === "BillionDue-v2.4.2.AppImage" ? "Connecting..." : "Download for Linux"}
                   </span>
                 </button>
               </div>

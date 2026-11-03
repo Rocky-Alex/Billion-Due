@@ -38,7 +38,7 @@ export function SiteFooter({ navigate }: SiteFooterProps) {
               </span>
             </div>
             <p className="font-sans text-[13px] leading-[20px] text-[#3D4A42] mb-3">
-              Precision commercial desktop tools and bespoke software engineering. Zero SaaS hostage traps. Complete hardware sovereignty.
+              Just vibe and build.
             </p>
             <div className="font-sans font-semibold text-[11px] uppercase tracking-wider text-[#006948] mb-1">
               REGIONAL &amp; GLOBAL HUBS
