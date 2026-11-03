@@ -12,10 +12,10 @@ export function SiteFooter({ navigate }: SiteFooterProps) {
 
   return (
     <footer className="w-full bg-[#F8F9FF] border-t border-[#EFF4FF] py-12">
-      <div className="max-w-[1280px] mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-[#EFF4FF]">
+      <div className="max-w-[1280px] mx-auto px-6 lg:px-12">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 pb-8 border-b border-[#EFF4FF]">
           {/* Brand Info */}
-          <div className="col-span-1">
+          <div className="md:col-span-5">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-7 h-7 rounded-lg bg-[#006948] flex items-center justify-center text-white font-bold text-xs shadow-sm">
                 <svg
@@ -50,7 +50,7 @@ export function SiteFooter({ navigate }: SiteFooterProps) {
           </div>
 
           {/* Navigation Links */}
-          <div className="col-span-1">
+          <div className="md:col-span-3 md:pl-6">
             <div className="font-sans font-semibold text-[12px] leading-[16px] tracking-[0.6px] uppercase text-[#0B1C30] mb-3">
               PAGES
             </div>
@@ -60,7 +60,7 @@ export function SiteFooter({ navigate }: SiteFooterProps) {
                   onClick={() => goTo("/")}
                   className="hover:text-[#006948] text-left cursor-pointer transition-colors"
                 >
-                  Home (Software Studio)
+                  Home
                 </button>
               </li>
               <li>
@@ -68,7 +68,7 @@ export function SiteFooter({ navigate }: SiteFooterProps) {
                   onClick={() => goTo("/products")}
                   className="hover:text-[#006948] text-left font-medium text-[#006948] cursor-pointer transition-colors"
                 >
-                  Products (BillionDue Desktop)
+                  Products
                 </button>
               </li>
               <li>
@@ -84,55 +84,14 @@ export function SiteFooter({ navigate }: SiteFooterProps) {
                   onClick={() => goTo("/contact")}
                   className="hover:text-[#006948] text-left cursor-pointer transition-colors"
                 >
-                  Contact Us (Consultation Hub)
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Featured Software Products */}
-          <div className="col-span-1">
-            <div className="font-sans font-semibold text-[12px] leading-[16px] tracking-[0.6px] uppercase text-[#0B1C30] mb-3">
-              PRODUCTS
-            </div>
-            <ul className="space-y-2 text-[13px] text-[#3D4A42]">
-              <li>
-                <button
-                  onClick={() => goTo("/products")}
-                  className="hover:text-[#006948] text-left font-medium text-[#006948] cursor-pointer transition-colors"
-                >
-                  BillionDue Desktop v2.4
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => goTo("/products")}
-                  className="hover:text-[#006948] text-left cursor-pointer transition-colors"
-                >
-                  Perpetual Subscriptions (AED/USD)
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => goTo("/contact")}
-                  className="hover:text-[#006948] text-left cursor-pointer transition-colors"
-                >
-                  Bespoke ERP Integration
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => goTo("/contact")}
-                  className="hover:text-[#006948] text-left cursor-pointer transition-colors"
-                >
-                  Custom ESC/POS Thermal Drivers
+                  Contact Us
                 </button>
               </li>
             </ul>
           </div>
 
           {/* Contact & Inquiries */}
-          <div className="col-span-1">
+          <div className="md:col-span-4 md:pl-6">
             <div className="font-sans font-semibold text-[12px] leading-[16px] tracking-[0.6px] uppercase text-[#0B1C30] mb-3">
               CONTACT &amp; INQUIRIES
             </div>
@@ -163,7 +122,7 @@ export function SiteFooter({ navigate }: SiteFooterProps) {
         {/* Copyright & Legal */}
         <div className="flex flex-col sm:flex-row items-center justify-between pt-6 text-[13px] text-[#3D4A42] gap-4">
           <div>© 2026 Team BC Dev. All rights reserved. Precision bespoke engineering.</div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <button
               onClick={() => goTo("/about")}
               className="hover:text-[#006948] cursor-pointer"
@@ -190,4 +149,3 @@ export function SiteFooter({ navigate }: SiteFooterProps) {
     </footer>
   );
 }
-
